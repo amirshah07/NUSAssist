@@ -1,4 +1,4 @@
-import profile from "./assets/images/emptyprofile.jpg";
+import profile from "../assets/images/emptyprofile.jpg";
 
 export default function Navbar() {
     return (
@@ -9,7 +9,6 @@ export default function Navbar() {
                 <h1>NUSAssist</h1>
                 </a>
             </div>
-
             <div className="navbar-center">
                 <a href="/timetable">
                 My Timetable
