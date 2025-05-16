@@ -13,6 +13,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+* { /* Makes all elements include padding/border in width/height calculations for more predictable layouts */
+   box-sizing: border-box; 
+}
+
 .navbar {
   display: flex;
   justify-content: center;
@@ -230,14 +234,38 @@
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 850px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 850px;
   margin: 0 auto;
   color: #fff;
 }
 
 .homepage form > div {
   margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .homepage form {
+    padding: 1.5rem;
+  }
+  
+  .homepage form > div > button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .homepage form {
+    padding: 1rem;
+  }
+  
+  .homepage form > div > label {
+    font-size: 1rem;
+  }
+  
+  .homepage form > div > input {
+    padding: 0.6rem;
+  }
 }
 
 .homepage form > div >h2 { /* TEMPORARY --> TO BE REMOVED */
@@ -276,12 +304,12 @@
   border-radius: 4px;
   font-size: 1.1rem;
   font-weight: 600;
-  width: 30%;
+  width: 32%;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-main > form > div > button:hover {
+.homepage > form > div > button:hover {
   background-color: #ff4d00;
 }
 
