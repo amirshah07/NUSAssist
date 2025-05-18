@@ -3,7 +3,7 @@ import Homepage from './pages/Homepage';
 import URoadmap from './pages/URoadmap';
 import Timetable from './pages/Timetable';
 import Profile from './pages/Profile';
-import Gpa from './pages/gpa';
+import Gpa from './pages/Gpa';
 import NoPage from './pages/NoPage';
 
 function App() {
