@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import profile from "../assets/images/emptyprofile.jpg";
+import profile from "../assets/images/emptyprofile.png";
 
 export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -30,22 +30,23 @@ export default function Navbar() {
 
     // Close menu when clicking outside
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            const menu = document.getElementById('mobile-menu');
-            const hamburger = document.getElementById('hamburger-icon');
-            
-            if (menuOpen && menu && hamburger && 
-                !menu.contains(event.target) && 
-                !hamburger.contains(event.target)) {
-                setMenuOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
+    const handleClickOutside = (event: MouseEvent) => {
+        const menu = document.getElementById('mobile-menu');
+        const hamburger = document.getElementById('hamburger-icon');
         
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        if (menuOpen && menu && hamburger &&
+            !menu.contains(event.target as Node) &&
+            !hamburger.contains(event.target as Node)) {
+        setMenuOpen(false);
+        }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Cleanup function
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+    };
     }, [menuOpen]);
 
     return (

@@ -316,3 +316,190 @@
 .homepage form > .homepage-submit > button {
   width: 100%;
 }
+
+/* Login/Register Page Styles */
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  flex-direction: column;
+}
+
+main form {
+  background-color: #212121;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+  color: #fff;
+}
+
+.login-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 25px;
+  margin-bottom: 2rem;
+}
+
+.login-heading h1 {
+  margin: 0;
+  font-weight: 740;
+  color: #FF6B00;
+  font-size: 2.3rem;
+}
+
+.login-heading h2 {
+  margin: 0;
+  font-weight: 650;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #1a1a1a;
+  color: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.input-container input:focus {
+  border-color: #FF6B00;
+  outline: none;
+}
+
+.input-container button {
+  padding: 0.7rem 0.8rem;
+  background-color: #FF6B00;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.input-container button:hover {
+  background-color: #ff4d00;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.divider hr {
+  width: 40%;
+  border: 1px solid #555;
+}
+
+.divider span {
+  margin: 0 10px;
+  color: #aaa;
+}
+
+main form h2 {
+  margin: 8px 0;
+  font-weight: 650;
+  color: #fff;
+}
+
+.google-logo {
+  width: 60%;
+  max-width: 230px;
+  cursor: pointer;
+  display: block;
+  margin: 1rem 0;
+}
+
+.google-login-container {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.navbar-right img:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255, 107, 0, 1); 
+}
+
+main form p {
+  text-align: center;
+  margin-top: 2rem;
+  color: #fff;
+}
+
+main form p a {
+  color: #FF6B00;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+main form p a:hover {
+  color: #ff4d00;
+  text-decoration: underline;
+}
+
+
+/* Password validation styles */
+.password-mismatch {
+  border: 1px solid #ff3333 !important;
+  box-shadow: 0 0 5px rgba(255, 51, 51, 0.3);
+}
+
+.error-message {
+  color: #ff3333;
+  font-size: 0.9rem;
+  margin-top: -10px;
+  margin-bottom: 5px;
+  text-align: left;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  main form {
+    padding: 1.5rem;
+  }
+  
+  .login-heading h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  main form {
+    padding: 1rem;
+  }
+  
+  .login-heading h1 {
+    font-size: 1.8rem;
+  }
+  
+  .input-container input {
+    padding: 0.6rem;
+  }
+}

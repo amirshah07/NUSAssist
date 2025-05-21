@@ -4,6 +4,8 @@ import URoadmap from './pages/URoadmap';
 import Timetable from './pages/Timetable';
 import Profile from './pages/Profile';
 import Gpa from './pages/Gpa';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import NoPage from './pages/NoPage';
 
 function App() {
@@ -16,6 +18,8 @@ function App() {
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/gpacalculator" element={<Gpa />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="*" element={<NoPage />} />
       </Routes>
     </BrowserRouter>
