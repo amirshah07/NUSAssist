@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import googleLogo from "../assets/images/google.png";
 import "../index.css";
 
 export default function Register() {
