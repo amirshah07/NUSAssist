@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import "../index.css";
+import { supabase } from "../lib/supabaseClient";
+
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -39,7 +41,17 @@ export default function Register() {
       console.log("Passwords do not match");
       return;
     }
+    const {error} = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
     
+    if (error) {
+      console.error("Error signing up:", error.message);
+      return;
+    } else {
+      console.log("User registered successfully");
+    }
     console.log("Registration form submitted");
     console.log("Email:", email);
     console.log("Password:", password);

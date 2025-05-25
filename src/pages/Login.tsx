@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import googleLogo from "../assets/images/google.png";
 import "../index.css";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -22,6 +23,16 @@ export default function Login() {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
+        const { error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+        if (error) {
+            console.error("Error logging in:", error.message);
+            return;
+        } else {
+            window.location.href = "/"; 
+        }
         console.log("Form submitted");
         console.log("Email:", email);
         console.log("Password:", password);
