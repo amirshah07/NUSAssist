@@ -14,6 +14,16 @@ const sampleBlocks: TimetableBlock[] = [
       color: '#4285F4',
     },
     {
+      moduleCode: 'CS2140S',
+      lessonType: 'Lecture',
+      classNo: '1',
+      day: 'Monday',
+      startTime: '15:00',
+      endTime: '17:00',
+      venue: 'LT27',
+      color: '#4289F4',   
+    },
+    {
       moduleCode: 'CS2030S',
       lessonType: 'Tutorial',
       classNo: '3',
