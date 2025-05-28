@@ -1,6 +1,6 @@
-import Navbar from "../components/Navbar";
-import Timetable_comp from "../components/Timetable_comp";
-import type { TimetableBlock } from "../types";
+import Navbar from "../../components/Navbar/Navbar";
+import Timetable from "../../components/Timetable/Timetable";
+import type { TimetableBlock } from "../../types";
 
 const sampleBlocks: TimetableBlock[] = [
     {
@@ -25,11 +25,11 @@ const sampleBlocks: TimetableBlock[] = [
     }
   ];
 
-export default function Timetable() {
+export default function TimetablePage() {
     return (
         <> 
         <Navbar />
-        <Timetable_comp blocks={sampleBlocks} />
+        <Timetable blocks={sampleBlocks} />
         </>
     )
 }

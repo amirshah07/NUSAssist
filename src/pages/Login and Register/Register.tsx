@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import "../index.css";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
+import "./LoginRegister.css" 
 
 
 export default function Register() {
