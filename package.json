@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.1.4",
     "@supabase/supabase-js": "^2.49.8",
+    "@xyflow/react": "^12.6.4",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "lodash": "^4.17.21",

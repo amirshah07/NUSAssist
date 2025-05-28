@@ -1,8 +1,9 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import googleLogo from "../assets/images/google.png";
-import "../index.css";
-import { supabase } from "../lib/supabaseClient";
+import googleLogo from "../../assets/images/google.png";
+import { supabase } from "../../lib/supabaseClient";
+import "./LoginRegister.css" 
+
 
 export default function Login() {
     const [email, setEmail] = useState("");
