@@ -76,17 +76,6 @@
   gap: 50px;
 }
 
-.navbar-right img {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-}
-
-.navbar-right img:hover { /* orange glow effect */
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(255, 107, 0, 1); 
-}
-
 .hamburger-menu {
   display: none;
   flex-direction: column;
@@ -164,6 +153,120 @@
   transform: translateY(0);
 }
 
+.logout-button {
+  background-color: transparent;
+  border: 2px solid #FF6B00;
+  color: #FF6B00;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.logout-button:hover {
+  background-color: #FF6B00;
+  color: #fff;
+}
+
+.logout-button:active {
+  background-color: #e55a00;
+  border-color: #e55a00;
+}
+
+/* ========== LOGOUT MODAL STYLES ========== */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  color: #fff;
+  border-radius: 16px;
+  border: 1px solid #FF6B00;
+  max-width: 440px;
+  width: 90%;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 2rem 2rem 1.25rem 2rem;
+  text-align: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.modal-body {
+  padding: 1.75rem 2rem;
+  text-align: center;
+}
+
+.modal-body p {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #c0c0c0;
+}
+
+.modal-actions {
+  padding: 0 2rem 2rem 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.modal-button {
+  padding: 0.875rem 1.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 110px;
+  font-family: inherit;
+}
+
+.cancel-button {
+  background: #404040;
+  color: #fff;
+}
+
+.cancel-button:hover {
+  background-color: #4a4a4a;
+  border-color: #666;
+}
+
+.confirm-button {
+  background: #FF6B00;
+  color: #fff;
+}
+
+.confirm-button:hover {
+  background: #e55a00;
+  border-color: #e55a00;
+}
+
+/* ========== RESPONSIVE STYLES ========== */
+
 @media (max-width: 992px) {
   .navbar-center.desktop-menu {
     display: none;
@@ -179,6 +282,15 @@
   
   .navbar-left h1 {
     font-size: 2rem;
+  }
+
+  .logout-button {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .navbar-right {
+    gap: 20px;
   }
 }
 
@@ -197,5 +309,55 @@
     right: 0;
     top: 70px;
     border-radius: 0;
+  }
+
+  .logout-button {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .navbar-right {
+    gap: 15px;
+  }
+
+  /* Modal responsive styles */
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-actions {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .logout-button {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .modal-header h3 {
+    font-size: 1.5rem;
+  }
+
+  .modal-body p {
+    font-size: 1rem;
+  }
+
+  .modal-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
   }
 }
