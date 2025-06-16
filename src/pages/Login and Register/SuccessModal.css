@@ -1,0 +1,113 @@
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: auto;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  flex-direction: column;
+}
+
+.registration-success {
+  background-color: #212121;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  color: #fff;
+  text-align: center;
+}
+
+.success-title {
+  margin: 0 0 2rem 0;
+  font-weight: 740;
+  color: #fff;
+  font-size: 2.3rem;
+}
+
+.verification-text {
+  color: #fff;
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.email-display {
+  color: #FF6B00;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 1.5rem 0;
+}
+
+.instruction-text {
+  color: #fff;
+  margin: 0 0 2rem 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.continue-button {
+  padding: 0.7rem 0.8rem;
+  background-color: #FF6B00;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.continue-button:hover:not(:disabled) {
+  background-color: #ff4d00;
+}
+
+.continue-button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.footer-note {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  margin: 0;
+  text-align: center;
+}
+
+/* Email Link Styling */
+.footer-note a {
+    color: #FF6B00;
+    text-decoration: none;
+    font-weight: 350;
+    transition: color 0.3s ease;
+}
+
+.footer-note a:hover {
+    color: #ff4d00;
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .registration-success {
+    padding: 1.5rem;
+  }
+  
+  .success-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .registration-success {
+    padding: 1rem;
+  }
+  
+  .success-title {
+    font-size: 1.8rem;
+  }
+}

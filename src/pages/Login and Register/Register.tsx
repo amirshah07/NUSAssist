@@ -1,22 +1,31 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import SuccessModal from "./SuccessModal.tsx"; 
+import Loading from "../../components/Loading/Loading.tsx";
 import "./LoginRegister.css" 
-
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState(""); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setEmail(e.target.value);
+    setEmailError("");
   };
 
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setPassword(e.target.value);
-    // Check if passwords match whenever password changes
+    setPasswordError("");
     if (confirmPassword) {
       setPasswordsMatch(e.target.value === confirmPassword);
     }
@@ -24,83 +33,143 @@ export default function Register() {
 
   const handleConfirmPasswordChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setConfirmPassword(e.target.value);
-    // Check if passwords match whenever confirm password changes
     setPasswordsMatch(password === e.target.value);
+  };
+
+  const togglePassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    setIsLoading(true);
+    setEmailError("");
+    setPasswordError("");
     
-    // Basic validation
-    if (!email || !password || !confirmPassword) {
-      console.log("Please fill in all fields");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError("Please enter a valid email address");
+      setIsLoading(false);
       return;
     }
-    
+
     if (!passwordsMatch) {
-      console.log("Passwords do not match");
+      setIsLoading(false);
       return;
     }
-    const {error} = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
-    
-    if (error) {
-      console.error("Error signing up:", error.message);
+
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      setIsLoading(false);
       return;
-    } else {
-      console.log("User registered successfully");
     }
-    console.log("Registration form submitted");
-    console.log("Email:", email);
-    console.log("Password:", password);
-    console.log("Confirm Password:", confirmPassword);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        if (error.message.includes("Password should be")) {
+          setPasswordError("Password must be at least 8 characters long");
+        } else {
+          setEmailError(error.message);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+        setEmailError("Email is already registered");
+        setIsLoading(false);
+        return;
+      }
+
+      setShowSuccess(true);
+      setIsLoading(false);
+      
+    } catch (error) {
+      setEmailError("An unexpected error occurred");
+      setIsLoading(false);
+    }
   };
+
+  if (showSuccess) {
+    return <SuccessModal type="registration" email={email} />;
+  }
 
   return (
     <main>
+      {isLoading && <Loading />}
       <form onSubmit={handleSubmit}>
-        <div className="login-heading">
-          <div>
-            <h1>NUSAssist</h1>
-          </div>
-          <h2>Create Account</h2>
+        <div className="form-heading">
+          <h1>NUSAssist</h1>
+          <h2>Register</h2>
         </div>
         <div className="input-container">
           <input
             type="email"
-            id="email"
-            name="email"
             placeholder="Enter your email"
             value={email}
             onChange={handleEmailChange}
             required
+            className={emailError ? "input-error" : ""}
           />
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Create a password"
-            value={password}
-            onChange={handlePasswordChange}
-            required
-          />
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={handleConfirmPasswordChange}
-            required
-            className={!passwordsMatch && confirmPassword ? "password-mismatch" : ""}
-          />
+          {emailError && (
+            <div className="error-message">{emailError}</div>
+          )}
+          
+          <div className="password-input-container">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Create a password"
+              value={password}
+              onChange={handlePasswordChange}
+              required
+              className={passwordError ? "input-error" : ""}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={togglePassword}
+              aria-label="Toggle password visibility"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+          {passwordError && (
+            <div className="error-message">{passwordError}</div>
+          )}
+          
+          <div className="password-input-container">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={handleConfirmPasswordChange}
+              required
+              className={!passwordsMatch && confirmPassword ? "input-error" : ""}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={toggleConfirmPassword}
+              aria-label="Toggle confirm password visibility"
+            >
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           {!passwordsMatch && confirmPassword && (
             <div className="error-message">Passwords do not match</div>
           )}
-          <button type="submit">
-            Register Account
+          
+          <button type="submit" disabled={isLoading}>
+            {isLoading ? "Creating Account..." : "Register Account"}
           </button>
         </div>
 
