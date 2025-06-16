@@ -1,28 +1,144 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { supabase } from './lib/supabaseClient'; 
 import Homepage from './pages/Homepage/Homepage';
 import RoadmapPage from './pages/RoadmapPage/RoadmapPage';
 import TimetablePage from './pages/TimetablePage/TimetablePage';
-import ProfilePage from './pages/ProfilePage/ProfilePage';
 import GpaPage from './pages/GpaPage/GpaPage';
 import Login from './pages/Login and Register/Login';
 import Register from './pages/Login and Register/Register';
+import ResetPassword from './pages/Login and Register/ResetPassword'; 
 import PageNotFound from './pages/PageNotFound/PageNotFound';
 
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
+  useEffect(() => {
+    // Check current session
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
 
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>;
+  }
+
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+};
+
+// Public Route Component (for login/register)
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check current session
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>;
+  }
+
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/homepage" replace />;
+};
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route index element={<Homepage />} />
-        <Route path="/homepage" element={<Homepage />} />
-        <Route path="/roadmap" element={<RoadmapPage />} />
-        <Route path="/timetable" element={<TimetablePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/gpacalculator" element={<GpaPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Protected Routes - only accessible when logged in */}
+        <Route 
+          index 
+          element={
+            <ProtectedRoute>
+              <Homepage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/homepage" 
+          element={
+            <ProtectedRoute>
+              <Homepage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/roadmap" 
+          element={
+            <ProtectedRoute>
+              <RoadmapPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/timetable" 
+          element={
+            <ProtectedRoute>
+              <TimetablePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/gpacalculator" 
+          element={
+            <ProtectedRoute>
+              <GpaPage />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Public Routes - only accessible when not logged in */}
+        <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/register" 
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          } 
+        />
+
+        {/* Reset Password Route - only accessible with valid reset link */}
+        <Route 
+          path="/resetpassword" 
+          element={<ResetPassword />}
+        />
+
+        {/* 404 Page */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>
