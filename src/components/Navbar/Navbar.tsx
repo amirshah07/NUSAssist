@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
+import Loading from "../Loading/Loading.tsx";
 import "./Navbar.css"
 
 export default function Navbar() {
@@ -179,7 +180,7 @@ export default function Navbar() {
                             onClick={confirmLogout}
                             disabled={isLoggingOut}
                         >
-                            {isLoggingOut ? "Logging Out..." : "Log Out"}
+                            {isLoggingOut ? <Loading/> : "Log Out"}
                         </button>
                     </div>
                 </div>
