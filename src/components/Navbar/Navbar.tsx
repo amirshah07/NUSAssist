@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
-import Loading from "../Loading/Loading.tsx";
+import ConfirmModal from "../Roadmap/ConfirmModal"
 import "./Navbar.css"
 
 export default function Navbar() {
@@ -9,7 +9,6 @@ export default function Navbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
     
     // Handle window resize and determine if it's mobile device
     useEffect(() => {
@@ -35,8 +34,6 @@ export default function Navbar() {
     };
 
     const confirmLogout = async () => {
-        setIsLoggingOut(true);
-        
         try {
             const { error } = await supabase.auth.signOut();
             
@@ -55,7 +52,6 @@ export default function Navbar() {
             sessionStorage.clear();
             navigate('/login', { replace: true });
         } finally {
-            setIsLoggingOut(false);
             setShowLogoutModal(false);
         }
     };
@@ -87,32 +83,6 @@ export default function Navbar() {
     const handleLinkClick = () => {
         setMenuOpen(false);
     };
-
-    // Handle ESC key and backdrop clicks for logout modal
-    useEffect(() => {
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape' && showLogoutModal) {
-                setShowLogoutModal(false);
-            }
-        };
-
-        const handleBackdropClick = (event: MouseEvent) => {
-            const modal = document.getElementById('logout-modal');
-            if (modal && event.target === modal) {
-                setShowLogoutModal(false);
-            }
-        };
-
-        if (showLogoutModal) {
-            document.addEventListener('keydown', handleEscape);
-            document.addEventListener('click', handleBackdropClick);
-        }
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.removeEventListener('click', handleBackdropClick);
-        };
-    }, [showLogoutModal]);
 
     return (
         <header className="navbar">
@@ -151,41 +121,21 @@ export default function Navbar() {
                 <button 
                     className="logout-button" 
                     onClick={handleLogout}
-                    disabled={isLoggingOut}
                 >
-                    {isLoggingOut ? "logging out..." : "log out"}
+                    log out
                 </button>
             </div>
           </div>
-
-          {showLogoutModal && (
-            <div id="logout-modal" className="modal-backdrop">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h3>Confirm Logout</h3>
-                    </div>
-                    <div className="modal-body">
-                        <p>Are you sure you want to log out? You'll need to log in again to access your account.</p>
-                    </div>
-                    <div className="modal-actions">
-                        <button 
-                            className="modal-button cancel-button"
-                            onClick={cancelLogout}
-                            disabled={isLoggingOut}
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            className="modal-button confirm-button"
-                            onClick={confirmLogout}
-                            disabled={isLoggingOut}
-                        >
-                            {isLoggingOut ? <Loading/> : "Log Out"}
-                        </button>
-                    </div>
-                </div>
-            </div>
-          )}
+          
+          <ConfirmModal
+            isOpen={showLogoutModal}
+            onClose={cancelLogout}
+            onConfirm={confirmLogout}
+            title="Confirm Logout"
+            message="Are you sure you want to log out? You'll need to log in again to access your account."
+            confirmText="Log Out"
+            cancelText="Cancel"
+          />
         </header>
     );
 }
