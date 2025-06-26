@@ -1,4 +1,4 @@
-/* CombinedSearchTimePreference.css */
+/* CombinedSearchTimePreference.css - Complete styles */
 .combined-search-container {
   background-color: #212121;
   border-radius: 8px;
@@ -409,9 +409,8 @@
 }
 
 .grid-body {
-  max-height: 400px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* No scrolling - show all time slots */
+  overflow: visible;
 }
 
 .time-row {
@@ -455,7 +454,6 @@
 }
 
 .time-slot:hover {
-  background-color: rgba(255, 107, 0, 0.2);
   transform: scale(1.02);
 }
 
@@ -466,7 +464,6 @@
 
 .time-slot.available:hover {
   background-color: #45a049;
-  transform: scale(1.02);
 }
 
 .time-slot.blocked {
@@ -476,7 +473,6 @@
 
 .time-slot.blocked:hover {
   background-color: #da190b;
-  transform: scale(1.02);
 }
 
 .time-slot.dragging {
@@ -638,24 +634,20 @@
   font-weight: bold;
 }
 
-/* Scrollbar styling */
-.grid-body::-webkit-scrollbar,
+/* Dropdown scrollbar styling */
 .dropdown::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
-.grid-body::-webkit-scrollbar-track,
 .dropdown::-webkit-scrollbar-track {
   background: #2a2a2a;
 }
 
-.grid-body::-webkit-scrollbar-thumb,
 .dropdown::-webkit-scrollbar-thumb {
   background: #555;
   border-radius: 3px;
 }
 
-.grid-body::-webkit-scrollbar-thumb:hover,
 .dropdown::-webkit-scrollbar-thumb:hover {
   background: #777;
 }
@@ -755,10 +747,6 @@
   
   .time-slot {
     height: 32px;
-  }
-  
-  .grid-body {
-    max-height: 300px;
   }
   
   .optimize-button {

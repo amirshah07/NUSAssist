@@ -281,23 +281,32 @@
   cursor: default;
 }
 
-/* Custom event styling for venue and class info */
+/* Custom event styling for module, lesson type, class, and venue info */
 .custom-event {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 2px 4px;
+  justify-content: flex-start;
+  padding: 3px 5px;
   overflow: hidden;
+  gap: 1px;
 }
 
 .event-title {
-  font-weight: 600;
-  font-size: 0.75rem;
+  font-weight: 700;
+  font-size: 0.8rem;
   line-height: 1.1;
-  margin-bottom: 2px;
   color: white;
+  margin-bottom: 1px;
+}
+
+.event-subtitle {
+  font-weight: 500;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1;
+  margin-bottom: 2px;
 }
 
 .event-details {
@@ -306,21 +315,21 @@
   gap: 1px;
 }
 
-.event-venue,
-.event-class {
+.event-class,
+.event-venue {
   font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.event-venue {
+.event-class {
   font-weight: 500;
 }
 
-.event-class {
+.event-venue {
   font-weight: 400;
   font-style: italic;
 }
@@ -356,11 +365,15 @@
   }
   
   .event-title {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
   
-  .event-venue,
-  .event-class {
+  .event-subtitle {
+    font-size: 0.65rem;
+  }
+  
+  .event-class,
+  .event-venue {
     font-size: 0.6rem;
   }
 }
@@ -385,11 +398,15 @@
   }
   
   .event-title {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
   
-  .event-venue,
-  .event-class {
+  .event-subtitle {
+    font-size: 0.6rem;
+  }
+  
+  .event-class,
+  .event-venue {
     font-size: 0.55rem;
   }
-}       
+}

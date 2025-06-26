@@ -64,10 +64,10 @@ export default function CombinedSearchTimePreference({
   const inputRef = useRef<HTMLInputElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Time configuration - 1-hour blocks from 7am to 7pm
+  // Time configuration - 1-hour blocks from 8am to 9pm (13 hours total)
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const startHour = 7;
-  const endHour = 19;
+  const startHour = 8;
+  const endHour = 21; // 9pm
 
   const generateTimeSlots = useCallback(() => {
     const slots: string[] = [];
@@ -80,13 +80,13 @@ export default function CombinedSearchTimePreference({
 
   const timeSlots = generateTimeSlots();
 
-  // Initialize preferences with all slots selected by default
+  // Initialize preferences with all slots selected by default (available)
   useEffect(() => {
     const initialPreferences: TimePreferenceData = {};
     days.forEach(day => {
       initialPreferences[day] = {};
       timeSlots.forEach(time => {
-        initialPreferences[day][time] = true; // Changed to true by default
+        initialPreferences[day][time] = true; // All times available by default
       });
     });
     setPreferences(initialPreferences);
@@ -279,7 +279,7 @@ export default function CombinedSearchTimePreference({
     days.forEach(day => {
       clearedPreferences[day] = {};
       timeSlots.forEach(time => {
-        clearedPreferences[day][time] = false; // This becomes "unavailable for all times"
+        clearedPreferences[day][time] = false; // Block all times
       });
     });
     setPreferences(clearedPreferences);
@@ -291,7 +291,7 @@ export default function CombinedSearchTimePreference({
     days.forEach(day => {
       allSelectedPreferences[day] = {};
       timeSlots.forEach(time => {
-        allSelectedPreferences[day][time] = true; // This becomes "available for all times"
+        allSelectedPreferences[day][time] = true; // Available all times
       });
     });
     setPreferences(allSelectedPreferences);
@@ -337,7 +337,7 @@ export default function CombinedSearchTimePreference({
         <div className="minimized-content">
           <div className="minimized-info">
             <span className="modules-count">{Object.keys(selectedModules).length} modules</span>
-            <span className="slots-count">{selectedCount} time slots selected</span>
+            <span className="slots-count">{totalSlots - selectedCount} time slots blocked</span>
             {isOptimized && <span className="optimized-badge">✨ Optimized</span>}
           </div>
           <div className="minimized-controls">
@@ -455,7 +455,7 @@ export default function CombinedSearchTimePreference({
             <h3>When are you NOT available for classes?</h3>
             <div className="grid-controls">
               <div className="selection-info">
-                {totalSlots - selectedCount} of {totalSlots} time slots blocked
+                {totalSlots - selectedCount} of {totalSlots} time slots blocked (8AM-9PM)
               </div>
               <div className="control-buttons">
                 <button 
