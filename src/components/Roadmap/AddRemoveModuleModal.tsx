@@ -336,7 +336,6 @@ const AddRemoveModuleModal = ({
         // For each query word, find all word prefix matches
         queryWords.forEach(queryWord => {
           // Split text into words and check each word
-          let wordStart = 0;
           let inWord = false;
           
           for (let i = 0; i <= text.length; i++) {
@@ -345,7 +344,6 @@ const AddRemoveModuleModal = ({
             
             if (!inWord && isWordChar) {
               // Start of a new word
-              wordStart = i;
               inWord = true;
               
               // Check if this word starts with the query word
