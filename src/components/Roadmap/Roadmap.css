@@ -1,77 +1,63 @@
-/* ===== Container ===== */
 .roadmap-container {
   position: relative;
   width: 100%;
-  height: calc(100vh - 6px); 
-  margin-top: 6px; /* to see navbar shadow */
+  height: calc(100vh - 6px);
+  margin-top: 6px;
   overflow: hidden;
-  max-height: calc(100vh - 100px); /* -100px so page cant scroll */
+  max-height: calc(100vh - 100px);
 }
 
-/* ===== Node Styling ===== */
-/* Base node styling */
 .react-flow__node {
-  background: #2a2a2a;
-  color: #f0f0f0;
-  border: 1px solid #404040;
-  border-radius: 8px;
-  font-size: 13px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s ease;
+  transition: opacity 0.3s ease, transform 0.2s ease;
 }
 
-/* Node hover effect */
-.react-flow__node:hover {
-  border-color: #FF6B00;
-  box-shadow: 0 4px 8px rgba(255, 107, 0, 0.2);
-  transform: translateY(-1px);
+.roadmap-container.node-hovering .react-flow__node {
+  opacity: 0.25;
 }
 
-/* Selected node */
-.react-flow__node.selected {
-  border-color: #FF6B00;
-  border-width: 2px;
-  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.2);
+.roadmap-container.node-hovering .react-flow__node.node-highlighted {
+  opacity: 1;
+  z-index: 10;
 }
 
-/* Input nodes (foundation modules) */
-.react-flow__node-input {
-  background: #1f1f1f;
+.react-flow__node.node-hovered {
+  transform: scale(1.05);
+  z-index: 20;
+}
+
+.react-flow__node.node-highlighted .custom-node {
   border-color: #FF6B00;
 }
 
-/* Output nodes (advanced modules) */
-.react-flow__node-output {
-  background: #333333;
-  border-color: #666666;
-}
-
-/* Node label styling */
-.react-flow__node-default .react-flow__label,
-.react-flow__node-input .react-flow__label,
-.react-flow__node-output .react-flow__label {
-  padding: 8px 12px;
-  font-weight: 500;
-}
-
-/* Handle (connection point) styling */
-.react-flow__handle {
-  background: #FF6B00;
-  border: 2px solid #2a2a2a;
-  width: 8px;
-  height: 8px;
-}
-
-.react-flow__handle:hover {
-  background: #ff8533;
-  transform: scale(1.2);
-}
-
-/* ===== Edge & Connection Styling ===== */
-/* Edge (connection line) styling */
 .react-flow__edge-path {
   stroke: #6b7280;
   stroke-width: 2;
+  transition: stroke 0.3s ease, opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.react-flow__edge .react-flow__arrowhead path {
+  fill: #6b7280;
+  transition: fill 0.3s ease;
+}
+
+.react-flow__edge {
+  pointer-events: none;
+}
+
+.roadmap-container.node-hovering .react-flow__edge-path {
+  opacity: 0.15;
+  stroke: #4b5563;
+}
+
+.roadmap-container.node-hovering .react-flow__edge.edge-highlighted .react-flow__edge-path {
+  opacity: 1;
+  stroke: #FF6B00;
+  stroke-width: 2;
+}
+
+.roadmap-container.node-hovering .react-flow__edge.edge-highlighted .react-flow__arrowhead path {
+  fill: #FF6B00;
 }
 
 .react-flow__edge.animated .react-flow__edge-path {
@@ -85,78 +71,135 @@
   }
 }
 
-/* Connection line while dragging */
 .react-flow__connection {
   stroke: #FF6B00;
 }
 
-/* Marker (arrowhead) styling */
 .react-flow__arrowhead {
-  transition: fill 0.2s ease;
+  transition: fill 0.3s ease;
 }
 
-/* Orange arrowhead on edge hover */
-.react-flow__edge:hover .react-flow__arrowhead {
+.react-flow svg defs marker,
+.react-flow svg defs marker * {
+  opacity: 1 !important;
+}
+
+.react-flow marker path,
+.react-flow defs marker path,
+.react-flow svg marker path {
+  opacity: 1 !important;
+  fill-opacity: 1 !important;
+}
+
+.roadmap-container.node-hovering .react-flow__edge:not(.edge-highlighted) .react-flow__arrowhead {
+  opacity: 0.15;
+  fill: #4b5563;
+}
+
+.roadmap-container.node-hovering .react-flow__edge.edge-highlighted .react-flow__arrowhead {
+  opacity: 1 !important;
   fill: #FF6B00 !important;
 }
 
-/* Style all arrow markers */
-marker path {
-  transition: fill 0.2s ease;
+[id*="react-flow__arrowclosed"],
+[id*="react-flow__arrow"] {
+  opacity: 1 !important;
 }
 
-/* Ensure SVG defs markers inherit their specified colors */
-.react-flow svg defs marker {
-  overflow: visible;
+[id*="react-flow__arrowclosed"] path,
+[id*="react-flow__arrow"] path {
+  opacity: 1 !important;
+  fill-opacity: 1 !important;
+  transition: fill 0.3s ease;
 }
 
-/* ===== UI Controls & Panels ===== */
-/* Controls and panel buttons */
-.react-flow__controls {
-  button {
-    background: #2a2a2a;
-    border-color: #404040;
-    color: #f0f0f0;
-  }
-  
-  button:hover {
-    background: #333333;
-    border-color: #FF6B00;
-  }
+.react-flow marker {
+  opacity: 1 !important;
 }
 
-/* Custom button styling to match theme */
-.xy-theme__button,
-.react-flow__panel button {
+.react-flow marker path {
+  opacity: 1 !important;
+  fill-opacity: 1 !important;
+}
+
+.custom-node {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: filter 0.3s ease;
+}
+
+.react-flow__panel {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.layout-button {
+  padding: 10px 20px;
   background: #2a2a2a;
+  border: 2px solid #404040;
+  border-radius: 8px;
   color: #f0f0f0;
-  border: 1px solid #404040;
-  padding: 8px 16px;
-  margin: 4px;
-  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 14px;
-  font-family: inherit;
+  outline: none;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  min-width: 120px;
 }
 
-.xy-theme__button:hover,
-.react-flow__panel button:hover {
-  background: #333333;
+.layout-button:hover {
   border-color: #FF6B00;
   color: #FF6B00;
+  background: #323232;
 }
 
-.xy-theme__button:active,
-.react-flow__panel button:active {
+.layout-button:active {
   background: #1f1f1f;
   transform: scale(0.98);
 }
 
-/* Panel background styling - transparent to show main background */
-.react-flow__panel {
-  background: transparent;
-  border: none;
+.zoom-button {
   padding: 8px;
+  background: #2a2a2a;
+  border: 2px solid #404040;
+  border-radius: 8px;
+  color: #f0f0f0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  height: 40px;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
 }
 
+.zoom-button:hover {
+  border-color: #FF6B00;
+  background: #323232;
+}
+
+.zoom-button:hover svg {
+  color: #FF6B00;
+}
+
+.react-flow__edges {
+  z-index: 0;
+}
+
+.react-flow__nodes {
+  z-index: 1;
+}

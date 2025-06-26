@@ -20,26 +20,26 @@ main form {
   color: #fff;
 }
 
-.login-heading {
+.form-heading {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 25px;
-  margin-bottom: 2rem;
+  gap: 15px;
+  margin-bottom: 1rem;
 }
 
-.login-heading h1 {
+.form-heading h1 {
   margin: 0;
-  font-weight: 740;
+  font-weight: 700;
   color: #FF6B00;
-  font-size: 2.3rem;
+  font-size: 2.5rem;
 }
 
-.login-heading h2 {
-  margin: 0;
+.form-heading h2 {
+  margin-bottom: 0;
   font-weight: 650;
-  font-size: 1.2rem;
   color: #fff;
+  font-size: 1.7rem;
 }
 
 .input-container {
@@ -47,6 +47,7 @@ main form {
   flex-direction: column;
   gap: 15px;
   margin-bottom: 2rem;
+  margin-top: -5px;
   width: 100%;
 }
 
@@ -67,7 +68,7 @@ main form {
   outline: none;
 }
 
-.input-container button {
+.input-container button[type="submit"] {
   padding: 0.7rem 0.8rem;
   background-color: #FF6B00;
   color: #fff;
@@ -80,25 +81,68 @@ main form {
   transition: background-color 0.3s ease;
 }
 
-.input-container button:hover {
+.input-container button[type="submit"]:hover:not(:disabled) {
   background-color: #ff4d00;
 }
 
-.divider {
+.input-container button[type="submit"]:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+/* Error and Forgot Password Container */
+.error-forgot-container {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  margin: 1.5rem 0;
+  width: 100%;
+  min-height: 30px;
+  margin-top: -10px;
 }
 
-.divider hr {
-  width: 40%;
-  border: 1px solid #555;
+/* Error Message Wrapper */
+.error-message-wrapper {
+  flex: 1;
+  min-height: 24px;
 }
 
-.divider span {
-  margin: 0 10px;
-  color: #aaa;
+/* Forgot Password Link Button */
+.forgot-password-link {
+  background: none !important;
+  border: none !important;
+  color: #FF6B00 !important;
+  text-decoration: none !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: color 0.3s ease !important;
+  padding: 0 !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.forgot-password-link:hover {
+  color: #ff4d00 !important;
+  text-decoration: underline !important;
+  background: none !important;
+}
+
+/* Back to Login Button */
+.back-to-login-btn {
+  background-color: transparent !important;
+  color: #FF6B00 !important;
+  border: 2px solid #FF6B00 !important;
+  border-radius: 4px !important;
+  padding: 0.7rem 0.8rem !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  margin-top: 10px !important;
+}
+
+.back-to-login-btn:hover {
+  background-color: #555 !important;
 }
 
 main form h2 {
@@ -144,20 +188,85 @@ main form p a:hover {
   text-decoration: underline;
 }
 
-
-/* Password validation styles */
-.password-mismatch {
+/* General error styling for inputs */
+.input-error {
   border: 1px solid #ff3333 !important;
   box-shadow: 0 0 5px rgba(255, 51, 51, 0.3);
 }
 
+/* Error message in login form (inline with forgot password) */
 .error-message {
   color: #ff3333;
+  font-size: 0.9rem;
+  text-align: left;
+  width: 100%;
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Error message in forgot password form (standalone) */
+.input-container > .error-message {
+  margin-top: -10px;
+  margin-bottom: 5px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success message for forgot password */
+.success-message {
+  color: #4CAF50;
   font-size: 0.9rem;
   margin-top: -10px;
   margin-bottom: 5px;
   text-align: left;
   width: 100%;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 4px solid #4CAF50;
+}
+
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-container input {
+  width: 100%;
+  padding-right: 45px;
+}
+
+.password-toggle {
+  position: absolute !important;
+  right: 12px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: #ccc !important;
+  z-index: 1 !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  transition: color 0.3s ease !important;
+  width: auto !important;
+  font-size: inherit !important;
+  font-weight: normal !important;
+}
+
+.password-toggle:hover {
+  color: #FF6B00 !important;
+  background: none !important;
 }
 
 @media (max-width: 768px) {
@@ -165,8 +274,12 @@ main form p a:hover {
     padding: 1.5rem;
   }
   
-  .login-heading h1 {
+  .form-heading h1 {
     font-size: 2rem;
+  }
+  
+  .form-heading h2 {
+    font-size: 1.3rem;
   }
 }
 
@@ -175,12 +288,26 @@ main form p a:hover {
     padding: 1rem;
   }
   
-  .login-heading h1 {
+  .form-heading h1 {
     font-size: 1.8rem;
+  }
+  
+  .form-heading h2 {
+    font-size: 1.2rem;
   }
   
   .input-container input {
     padding: 0.6rem;
   }
+  
+  /* Stack error and forgot password on mobile */
+  .error-forgot-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .forgot-password-link {
+    align-self: flex-end;
+  }
 }
-

@@ -1,0 +1,165 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  background: #2a2a2a;
+  color: #fff;
+  border-radius: 16px;
+  border: 1px solid #FF6B00;
+  max-width: 440px;
+  width: 90%;
+  overflow: hidden;
+  animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 1.3rem 2rem 1.3rem 2rem;
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.modal-body {
+  padding: 1.5rem 2rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.modal-message {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #c0c0c0;
+}
+
+.modal-footer {
+  padding: 0 2rem 2rem 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.modal-button {
+  padding: 0.875rem 1.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 110px;
+  font-family: inherit;
+  flex: 1;
+}
+
+.modal-button--secondary {
+  background: #404040;
+  color: #fff;
+}
+
+.modal-button--secondary:hover {
+  background: #4a4a4a;
+}
+
+.modal-button--secondary:active {
+  background: #383838;
+}
+
+.modal-button--primary {
+  background: #FF6B00;
+  color: #fff;
+}
+
+.modal-button--primary:hover {
+  background: #e55a00;
+}
+
+.modal-button--primary:active {
+  background: #cc5200;
+}
+
+.modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-button:focus-visible {
+  outline: 2px solid rgba(255, 107, 0, 0.5);
+  outline-offset: 2px;
+}
+
+.modal-close-button:focus-visible {
+  outline: 2px solid rgba(255, 107, 0, 0.5);
+  outline-offset: 0;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-title {
+    font-size: 1.5rem;
+  }
+
+  .modal-message {
+    font-size: 1rem;
+  }
+
+  .modal-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .modal-close-button {
+    top: 1rem;
+    right: 1rem;
+  }
+}
