@@ -44,6 +44,8 @@
   justify-content: center;
   flex-shrink: 0;
   position: relative;
+  background-color: #242424;
+  
 }
 
 .add-remove-modal-title {
@@ -84,8 +86,9 @@
   outline-offset: 0;
 }
 
-.search-section {
-  padding: 5px 20px 20px;
+.mod-search-section {
+  background-color: #242424;
+  padding: 0px 20px 20px;
   flex-shrink: 0;
   position: relative;
   z-index: 20;
@@ -568,7 +571,7 @@
   }
 
   .add-remove-modal-header,
-  .search-section,
+  .mod-search-section,
   .current-modules-section {
     padding-left: 16px;
     padding-right: 16px;

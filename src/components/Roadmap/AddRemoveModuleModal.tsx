@@ -459,7 +459,7 @@ const AddRemoveModuleModal = ({
           </button>
         </div>
 
-        <div className="search-section">
+        <div className="mod-search-section">
           <div className="search-container">
             <div className="search-input-wrapper">
               <Search size={18} className="search-icon" />
