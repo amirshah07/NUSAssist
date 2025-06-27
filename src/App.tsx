@@ -8,6 +8,7 @@ import GpaPage from './pages/GpaPage/GpaPage';
 import Login from './pages/Login and Register/Login';
 import Register from './pages/Login and Register/Register';
 import ResetPassword from './pages/Login and Register/ResetPassword'; 
+import Loading from './components/Loading/Loading';
 import PageNotFound from './pages/PageNotFound/PageNotFound';
 
 // Protected Route Component
@@ -33,7 +34,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Show loading while checking auth
   if (isAuthenticated === null) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
@@ -62,7 +63,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Show loading while checking auth
   if (isAuthenticated === null) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return !isAuthenticated ? <>{children}</> : <Navigate to="/homepage" replace />;
