@@ -137,7 +137,7 @@
   flex-wrap: nowrap;
 }
 
-.layout-button {
+.add-rmv-button {
   padding: 10px 20px;
   background: #2a2a2a;
   border: 2px solid #404040;
@@ -157,13 +157,13 @@
   min-width: 120px;
 }
 
-.layout-button:hover {
+.add-rmv-button:hover {
   border-color: #FF6B00;
   color: #FF6B00;
   background: #323232;
 }
 
-.layout-button:active {
+.add-rmv-button:active {
   background: #1f1f1f;
   transform: scale(0.98);
 }

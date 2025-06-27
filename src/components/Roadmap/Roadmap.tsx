@@ -43,7 +43,7 @@ const ZoomControls = ({ onAddRemoveClick }: { onAddRemoveClick: () => void }) =>
   
   return (
     <Panel position="top-right">
-      <button className="layout-button" onClick={onAddRemoveClick}>
+      <button className="add-rmv-button" onClick={onAddRemoveClick}>
         Add/Remove Module
       </button>
       <button className="zoom-button" onClick={() => zoomIn()}>
