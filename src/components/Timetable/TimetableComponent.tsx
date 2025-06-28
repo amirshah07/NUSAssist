@@ -143,7 +143,7 @@ const TimetableComponent = ({
     setDate(newDate);
   }, []);
 
-  // Store original modules for lesson switching when optimized
+  // Store original modules for lesson switching when optimized - EXACTLY like your original code
   useEffect(() => {
     if (!isOptimized && Object.keys(selectedModules).length > 0) {
       setOriginalModules(selectedModules);
@@ -210,6 +210,7 @@ const TimetableComponent = ({
   };
 
   const getAllAlternativesForLesson = (moduleCode: string, lessonType: string): TimetableBlock[] => {
+    // Use the logic from your original working code - EXACTLY
     const sourceModules = isOptimized && Object.keys(originalModules).length > 0 
       ? originalModules 
       : selectedModules;
@@ -360,12 +361,12 @@ const TimetableComponent = ({
     };
   };
 
-  // Calendar display hours - Full 24 hours (12am to 12am)
+  // Calendar display hours - 8AM to 9PM (non-scrollable)
   const minTime = new Date();
-  minTime.setHours(0, 0, 0); // 12:00 AM (midnight)
+  minTime.setHours(8, 0, 0); // 8:00 AM
 
   const maxTime = new Date();
-  maxTime.setHours(23, 59, 59); // 11:59 PM
+  maxTime.setHours(21, 0, 0); // 9:00 PM
 
   // Process selected modules into calendar events
   useEffect(() => {
@@ -392,7 +393,7 @@ const TimetableComponent = ({
       <div className="timetable-controls">
         <div className="semester-info">
           <span>
-            {isOptimized ? 'Optimized timetable' : 'Manual timetable'} for {selectedSemester} (24 Hours)
+            {isOptimized ? 'Optimized timetable' : 'Manual timetable'} for {selectedSemester} (8AM-9PM)
           </span>
         </div>
 
@@ -462,6 +463,7 @@ const TimetableComponent = ({
         eventPropGetter={eventStyleGetter}
         min={minTime}
         max={maxTime}
+        scrollToTime={minTime}
         dayLayoutAlgorithm="no-overlap"
         toolbar={true}
         onSelectEvent={handleEventClick}

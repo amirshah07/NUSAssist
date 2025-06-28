@@ -410,3 +410,48 @@
     font-size: 0.55rem;
   }
 }
+
+/* Make the calendar non-scrollable and fit the time range exactly */
+.rbc-time-view {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.rbc-time-content {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+.rbc-time-slot {
+  min-height: auto !important;
+}
+
+.rbc-timeslot-group {
+  min-height: auto !important;
+}
+
+/* Ensure the calendar displays 8AM-9PM without scrolling */
+.rbc-calendar {
+  height: 100% !important;
+}
+
+.rbc-calendar .rbc-time-view .rbc-time-content {
+  height: calc(100% - 50px) !important;
+  overflow-y: hidden !important;
+}
+
+/* Update the semester info text styling */
+.semester-info span {
+  color: #FF6B00;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* Ensure proper spacing for the 8AM-9PM view */
+.rbc-time-view .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid rgba(255, 107, 0, 0.1) !important;
+}
+
+.rbc-time-view .rbc-time-gutter .rbc-time-slot {
+  border-bottom: 1px solid rgba(255, 107, 0, 0.05) !important;
+}

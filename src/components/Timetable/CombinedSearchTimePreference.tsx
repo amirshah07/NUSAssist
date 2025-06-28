@@ -25,6 +25,10 @@ interface CombinedSearchTimePreferenceProps {
   onModulesUpdate?: (modules: SelectedModule) => void;
   onTimePreferencesChange: (preferences: TimePreferenceData) => void;
   onOptimize: () => Promise<void>;
+  onSemesterChange?: (semester: "sem1" | "sem2") => void;
+  currentSemester?: "sem1" | "sem2";
+  initialModules?: SelectedModule;
+  initialTimePreferences?: TimePreferenceData;
   disabled?: boolean;
   hasModules?: boolean;
   isOptimized?: boolean;
@@ -38,6 +42,10 @@ export default function CombinedSearchTimePreference({
   onModulesUpdate,
   onTimePreferencesChange,
   onOptimize,
+  onSemesterChange,
+  currentSemester = "sem1",
+  initialModules = {},
+  initialTimePreferences = {},
   disabled = false,
   hasModules = false,
   isOptimized = false,
@@ -49,13 +57,13 @@ export default function CombinedSearchTimePreference({
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ModuleData[]>([]);
-  const [selectedModules, setSelectedModules] = useState<SelectedModule>({});
+  const [selectedModules, setSelectedModules] = useState<SelectedModule>(initialModules);
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [selectedSemester, setSelectedSemester] = useState<"sem1" | "sem2">("sem1");
+  const [selectedSemester, setSelectedSemester] = useState<"sem1" | "sem2">(currentSemester);
 
   // Time preference state
-  const [preferences, setPreferences] = useState<TimePreferenceData>({});
+  const [preferences, setPreferences] = useState<TimePreferenceData>(initialTimePreferences);
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState<'select' | 'deselect'>('select');
 
@@ -82,16 +90,36 @@ export default function CombinedSearchTimePreference({
 
   // Initialize preferences with all slots selected by default (available)
   useEffect(() => {
-    const initialPreferences: TimePreferenceData = {};
-    days.forEach(day => {
-      initialPreferences[day] = {};
-      timeSlots.forEach(time => {
-        initialPreferences[day][time] = true; // All times available by default
+    if (Object.keys(initialTimePreferences).length > 0) {
+      setPreferences(initialTimePreferences);
+      onTimePreferencesChange(initialTimePreferences);
+    } else {
+      const initialPreferences: TimePreferenceData = {};
+      days.forEach(day => {
+        initialPreferences[day] = {};
+        timeSlots.forEach(time => {
+          initialPreferences[day][time] = true; // All times available by default
+        });
       });
-    });
-    setPreferences(initialPreferences);
-    onTimePreferencesChange(initialPreferences);
+      setPreferences(initialPreferences);
+      onTimePreferencesChange(initialPreferences);
+    }
   }, []);
+
+  // Sync with external state changes
+  useEffect(() => {
+    setSelectedModules(initialModules);
+  }, [initialModules]);
+
+  useEffect(() => {
+    setSelectedSemester(currentSemester);
+  }, [currentSemester]);
+
+  useEffect(() => {
+    if (Object.keys(initialTimePreferences).length > 0) {
+      setPreferences(initialTimePreferences);
+    }
+  }, [initialTimePreferences]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -198,6 +226,9 @@ export default function CombinedSearchTimePreference({
   const handleSemesterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSemester = e.target.value as "sem1" | "sem2";
     setSelectedSemester(newSemester);
+    if (onSemesterChange) {
+      onSemesterChange(newSemester);
+    }
     setSearchQuery("");
     setSearchResults([]);
     setShowDropdown(false);
@@ -321,7 +352,6 @@ export default function CombinedSearchTimePreference({
     
     try {
       await onOptimize();
-      // Note: Minimization is now handled by the parent component
     } catch (error) {
       console.error('Optimization failed:', error);
     }
