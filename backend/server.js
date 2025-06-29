@@ -3,8 +3,11 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORTS = [5001, 5000, 5002, 8000, 8080];
 
+// Use Railway's provided PORT or fallback to 5001
+const PORT = process.env.PORT || 5001;
+
+// Update CORS for production
 app.use(cors({
   origin: [
     'http://localhost:3000', 
@@ -12,7 +15,9 @@ app.use(cors({
     'http://localhost:5173',
     'http://localhost:4173',
     'http://127.0.0.1:5173',
-    'http://127.0.0.1:4173'
+    'http://127.0.0.1:4173',
+    // Add your Vercel domain here (you'll get this after deploying frontend)
+    process.env.FRONTEND_URL || 'https://your-app-name.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -34,7 +39,8 @@ try {
       message: 'Backend server is running!', 
       timestamp: new Date().toISOString(),
       note: 'Optimization routes not yet configured',
-      port: res.locals.port || 'unknown'
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development'
     });
   });
 }
@@ -43,7 +49,8 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'Server running', 
     timestamp: new Date().toISOString(),
-    port: res.locals.port || 'unknown'
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -56,56 +63,36 @@ app.get('/', (req, res) => {
       optimize: '/api/optimize-timetable (when configured)'
     },
     timestamp: new Date().toISOString(),
-    port: res.locals.port || 'unknown'
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-function startServer(portIndex = 0) {
-  if (portIndex >= PORTS.length) {
-    console.error('All ports are in use. Please free up a port or restart your computer.');
-    process.exit(1);
-  }
+// Single server startup (Railway manages this)
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Test endpoint: http://localhost:${PORT}/api/test`);
+});
 
-  const PORT = PORTS[portIndex];
-  
-  const server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
-    console.log(`Test endpoint: http://localhost:${PORT}/api/test`);
-    console.log(`Full API: http://localhost:${PORT}/`);
-    console.log(`CORS enabled for frontend ports: 3000, 3001, 5173, 4173`);
-    
-    app.use((req, res, next) => {
-      res.locals.port = PORT;
-      next();
-    });
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
+});
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
   });
+});
 
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`Port ${PORT} is busy, trying next port...`);
-      startServer(portIndex + 1);
-    } else {
-      console.error('Server error:', err);
-      process.exit(1);
-    }
+process.on('SIGINT', () => {
+  console.log('\nSIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
   });
-
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
-  });
-
-  process.on('SIGINT', () => {
-    console.log('\nSIGINT received, shutting down gracefully');
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
-  });
-}
-
-startServer();
+});

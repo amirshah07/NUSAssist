@@ -1,0 +1,348 @@
+{
+  "modules": {
+    "BN2403": {
+      "timetable": [
+        {
+          "day": "Wednesday",
+          "size": 55,
+          "venue": "",
+          "weeks": {
+            "end": "2024-09-25",
+            "start": "2024-09-04"
+          },
+          "classNo": "A2",
+          "endTime": "1200",
+          "covidZone": "Unknown",
+          "startTime": "0900",
+          "lessonType": "Laboratory"
+        },
+        {
+          "day": "Tuesday",
+          "size": 230,
+          "venue": "LT2",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "1",
+          "endTime": "1300",
+          "covidZone": "C",
+          "startTime": "1100",
+          "lessonType": "Lecture"
+        },
+        {
+          "day": "Tuesday",
+          "size": 230,
+          "venue": "LT2",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "3",
+          "endTime": "1400",
+          "covidZone": "C",
+          "startTime": "1300",
+          "lessonType": "Tutorial"
+        }
+      ],
+      "moduleCode": "BN2403"
+    },
+    "CS1010": {
+      "timetable": [
+        {
+          "day": "Monday",
+          "size": 380,
+          "venue": "LT8",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "1",
+          "endTime": "1800",
+          "covidZone": "C",
+          "startTime": "1600",
+          "lessonType": "Sectional Teaching"
+        },
+        {
+          "day": "Thursday",
+          "size": 31,
+          "venue": "COM1-0120",
+          "weeks": [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "A06",
+          "endTime": "1000",
+          "covidZone": "C",
+          "startTime": "0800",
+          "lessonType": "Laboratory"
+        },
+        {
+          "day": "Wednesday",
+          "size": 26,
+          "venue": "AS6-020607",
+          "weeks": [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "06",
+          "endTime": "1400",
+          "covidZone": "C",
+          "startTime": "1300",
+          "lessonType": "Tutorial"
+        }
+      ],
+      "moduleCode": "CS1010"
+    },
+    "CCS5101": {
+      "timetable": [
+        {
+          "day": "Monday",
+          "size": 30,
+          "venue": "AS2-0302",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "1",
+          "endTime": "1800",
+          "covidZone": "C",
+          "startTime": "1500",
+          "lessonType": "Seminar-Style Module Class"
+        }
+      ],
+      "moduleCode": "CCS5101"
+    },
+    "CCS5103": {
+      "timetable": [
+        {
+          "day": "Tuesday",
+          "size": 30,
+          "venue": "AS1-0303",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "1",
+          "endTime": "1500",
+          "covidZone": "C",
+          "startTime": "1200",
+          "lessonType": "Seminar-Style Module Class"
+        }
+      ],
+      "moduleCode": "CCS5103"
+    },
+    "CCS5203": {
+      "timetable": [
+        {
+          "day": "Friday",
+          "size": 20,
+          "venue": "AS2-0302",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "1",
+          "endTime": "1200",
+          "covidZone": "C",
+          "startTime": "0900",
+          "lessonType": "Seminar-Style Module Class"
+        }
+      ],
+      "moduleCode": "CCS5203"
+    },
+    "CCS5205": {
+      "timetable": [
+        {
+          "day": "Tuesday",
+          "size": 20,
+          "venue": "AS7-0106",
+          "weeks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13
+          ],
+          "classNo": "1",
+          "endTime": "1200",
+          "covidZone": "C",
+          "startTime": "0900",
+          "lessonType": "Seminar-Style Module Class"
+        }
+      ],
+      "moduleCode": "CCS5205"
+    }
+  },
+  "constraints": {
+    "preferredTimeSlots": {
+      "Friday": {
+        "1000": true,
+        "1100": true,
+        "1200": true,
+        "1300": true,
+        "1400": true,
+        "1500": true,
+        "1600": true,
+        "1700": true,
+        "1800": true,
+        "1900": true,
+        "2000": true,
+        "0800": true,
+        "0900": true
+      },
+      "Monday": {
+        "1000": true,
+        "1100": true,
+        "1200": true,
+        "1300": true,
+        "1400": true,
+        "1500": true,
+        "1600": true,
+        "1700": true,
+        "1800": true,
+        "1900": true,
+        "2000": true,
+        "0800": true,
+        "0900": true
+      },
+      "Tuesday": {
+        "1000": false,
+        "1100": false,
+        "1200": false,
+        "1300": false,
+        "1400": false,
+        "1500": false,
+        "1600": false,
+        "1700": false,
+        "1800": false,
+        "1900": false,
+        "2000": false,
+        "0800": false,
+        "0900": false
+      },
+      "Thursday": {
+        "1000": true,
+        "1100": true,
+        "1200": true,
+        "1300": true,
+        "1400": true,
+        "1500": true,
+        "1600": true,
+        "1700": true,
+        "1800": true,
+        "1900": true,
+        "2000": true,
+        "0800": true,
+        "0900": true
+      },
+      "Wednesday": {
+        "1000": true,
+        "1100": true,
+        "1200": true,
+        "1300": true,
+        "1400": true,
+        "1500": true,
+        "1600": true,
+        "1700": true,
+        "1800": true,
+        "1900": true,
+        "2000": true,
+        "0800": true,
+        "0900": true
+      }
+    }
+  }
+}

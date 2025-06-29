@@ -20,7 +20,10 @@ interface OptimizedTimetable {
 }
 
 export class OptimizationService {
-  private static apiEndpoint = 'http://localhost:5001/api/optimize-timetable';
+  // Use environment variable for API endpoint, fallback to localhost for development
+  private static apiEndpoint = import.meta.env.VITE_API_URL 
+    ? `${import.meta.env.VITE_API_URL}/api/optimize-timetable`
+    : 'http://localhost:5001/api/optimize-timetable';
 
   static async optimizeTimetable(
     modules: SelectedModule,
@@ -62,7 +65,7 @@ export class OptimizationService {
       console.error('Error calling optimization service:', error);
       
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        console.warn('Backend server not reachable. Make sure server is running on port 5001');
+        console.warn('Backend server not reachable. Make sure server is running');
       } else if (error instanceof Error && error.message.includes('500')) {
         console.error('Backend server error. Check server logs for details.');
       }
@@ -71,7 +74,6 @@ export class OptimizationService {
       return this.mockOptimize(modules, constraints);
     }
   }
-
   private static async mockOptimize(
     modules: SelectedModule,
     constraints: TimetableConstraints
