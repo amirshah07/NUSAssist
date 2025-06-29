@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Calendar, Views, type View } from 'react-big-calendar';
+import { useEffect, useState } from 'react';
+import { Calendar, Views } from 'react-big-calendar';
 import { dayjsLocalizer } from 'react-big-calendar';
 import dayjs from 'dayjs';
 import { supabase } from '../../lib/supabaseClient';
