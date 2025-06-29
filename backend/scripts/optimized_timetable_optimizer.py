@@ -46,6 +46,7 @@ class TimetableOptimizer:
         print(f"Distance matrix computed with {len(self._distance_cache)} entries", file=sys.stderr)
 
     def _get_venue_distance(self, venue1: str, venue2: str) -> float:
+        """Calculate distance between two venues with error handling"""
         if venue1 not in self.locations or venue2 not in self.locations:
             return 1000
             
@@ -87,27 +88,37 @@ class TimetableOptimizer:
         cache_key = (venue1, venue2)
         if cache_key in self._distance_cache:
             return self._distance_cache[cache_key]
+        
         if venue1 not in self.locations or venue2 not in self.locations:
             return 1000
+        
         if venue1 == venue2:
             return 0
+        
         distance = self._get_venue_distance(venue1, venue2)
+        
         self._distance_cache[(venue1, venue2)] = distance
         self._distance_cache[(venue2, venue1)] = distance
+        
         return distance
     
     def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """Calculate haversine distance with error handling"""
         try:
             R = 6371000
+            
             lat1_rad = math.radians(float(lat1))
             lon1_rad = math.radians(float(lon1))
             lat2_rad = math.radians(float(lat2))
             lon2_rad = math.radians(float(lon2))
+            
             dlat = lat2_rad - lat1_rad
             dlon = lon2_rad - lon1_rad
+            
             a = (math.sin(dlat / 2) ** 2 + 
                  math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2)
             c = 2 * math.asin(math.sqrt(a))
+            
             distance = R * c
             return distance
         except Exception as e:
@@ -131,9 +142,11 @@ class TimetableOptimizer:
         except Exception:
             return "00:00"
 
-    def calculate_time_preference_penalty(self, lesson: Dict[str, Any], preferred_time_slots: Dict[str, Dict[str, bool]]) -> int:   
-        # Calculate penalty for lessons that fall in blocked time slots.
-        # Returns 0 for fully available time, higher values for blocked times.
+    def calculate_time_preference_penalty(self, lesson: Dict[str, Any], preferred_time_slots: Dict[str, Dict[str, bool]]) -> int:
+        """
+        Calculate penalty for lessons that fall in blocked time slots.
+        Returns 0 for fully available time, higher values for blocked times.
+        """
         try:
             lesson_day = lesson.get("day", "")
             lesson_start_time = lesson.get("startTime", "0000")
@@ -149,11 +162,14 @@ class TimetableOptimizer:
             
             if total_lesson_minutes <= 0:
                 return 1000  # Heavy penalty for invalid lessons
+            
+            # Check each hour during the lesson
             current_time = lesson_start
             while current_time < lesson_end:
                 hours = current_time // 60
                 time_slot = f"{hours:02d}00"
                 
+                # If this time slot is NOT available (False or missing), add penalty
                 if not day_preferences.get(time_slot, True):  # Default to available if not specified
                     slot_end = current_time + 60
                     actual_blocked = min(slot_end, lesson_end) - current_time
@@ -170,14 +186,16 @@ class TimetableOptimizer:
             return 50  # Medium penalty for error cases
 
     def calculate_travel_time(self, lesson1: Dict[str, Any], lesson2: Dict[str, Any]) -> float:
+        """Calculate travel time between two lessons in minutes"""
         if lesson1["day"] != lesson2["day"]:
-            return 0  # no travel needed on different days
+            return 0  # No travel needed on different days
         
         venue1 = lesson1.get("venue", "")
         venue2 = lesson2.get("venue", "")
         
         if venue1 == venue2:
-            return 0  
+            return 0  # Same venue
+        
         distance_meters = self.calculate_distance(venue1, venue2)
         walking_speed_mps = 1.4  # 1.4 m/s = ~5 km/h walking speed
         travel_time_minutes = (distance_meters / walking_speed_mps) / 60
@@ -205,6 +223,8 @@ class TimetableOptimizer:
                 return modules
             
             print(f"Processing {len(all_lessons)} total lessons", file=sys.stderr)
+            
+            # Create decision variables
             lesson_vars = {}
             for i, lesson in enumerate(all_lessons):
                 lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
@@ -397,3 +417,45 @@ class TimetableOptimizer:
             traceback.print_exc(file=sys.stderr)
             return modules
 
+def main():
+    """Test function with sample data"""
+    sample_modules = {
+        "CS2103T": {
+            "timetable": [
+                {
+                    "lessonType": "Lecture",
+                    "classNo": "1",
+                    "day": "Friday",
+                    "startTime": "1400",
+                    "endTime": "1600",
+                    "venue": "LT17"
+                },
+                {
+                    "lessonType": "Tutorial",
+                    "classNo": "T01",
+                    "day": "Wednesday",
+                    "startTime": "0900",
+                    "endTime": "1000",
+                    "venue": "COM1-0201"
+                }
+            ]
+        }
+    }
+    
+    # User blocks Thursday (not available)
+    sample_constraints = {
+        "preferredTimeSlots": {
+            "Monday": {"0900": True, "1000": True, "1100": True},
+            "Tuesday": {"0900": True, "1000": True, "1100": True},
+            "Wednesday": {"0900": True, "1000": True, "1100": True},
+            "Thursday": {"0900": False, "1000": False, "1100": False},  # Blocked
+            "Friday": {"1400": True, "1500": True}
+        }
+    }
+    
+    optimizer = TimetableOptimizer()
+    result = optimizer.optimize_timetable(sample_modules, sample_constraints)
+    print(json.dumps(result, indent=2))
+
+if __name__ == "__main__":
+    main()
