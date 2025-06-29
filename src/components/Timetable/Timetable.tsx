@@ -61,24 +61,22 @@ export default function Timetable() {
       setIsLoading(true);
       
       try {
-        // Get user's current semester
         const userSemester = await TimetableService.getUserCurrentSemester(user.id);
         setCurrentSemester(userSemester);
 
-        // Load timetable for current semester
         const timetableData = await TimetableService.loadUserTimetable(user.id, userSemester);
         
         if (timetableData) {
+          console.log('Loaded timetable data:', timetableData);
           setSelectedModules(timetableData.modules);
           setConstraints({ preferredTimeSlots: timetableData.timePreferences });
           setIsOptimized(timetableData.isOptimized);
-          setIsMinimized(true); // Minimize if data exists
+          setIsMinimized(true);
           
           if (timetableData.isOptimized) {
             setOptimizedModules(timetableData.modules);
           }
         } else {
-          // No saved data, reset to defaults
           setSelectedModules({});
           setOptimizedModules({});
           setConstraints({ preferredTimeSlots: {} });
@@ -101,8 +99,9 @@ export default function Timetable() {
       if (!user?.id || !hasUnsavedChanges) return;
       
       const modulesToSave = isOptimized ? optimizedModules : selectedModules;
+      console.log('Auto-saving modules:', modulesToSave);
       
-      await TimetableService.saveUserTimetable(
+      const success = await TimetableService.saveUserTimetable(
         user.id,
         currentSemester,
         modulesToSave,
@@ -110,7 +109,12 @@ export default function Timetable() {
         isOptimized
       );
       
-      setHasUnsavedChanges(false);
+      if (success) {
+        console.log('Auto-save successful');
+        setHasUnsavedChanges(false);
+      } else {
+        console.error('Auto-save failed');
+      }
     };
 
     const debounceTimer = setTimeout(saveChanges, 500);
@@ -118,6 +122,7 @@ export default function Timetable() {
   }, [selectedModules, optimizedModules, constraints, isOptimized, currentSemester, hasUnsavedChanges, user?.id]);
 
   const handleModulesUpdate = useCallback((modules: SelectedModule) => {
+    console.log('handleModulesUpdate called with:', modules);
     setSelectedModules(modules);
     setIsOptimized(false);
     setOptimizedModules({});
@@ -136,7 +141,6 @@ export default function Timetable() {
     setIsLoading(true);
     
     try {
-      // Save current semester data before switching
       const currentModules = isOptimized ? optimizedModules : selectedModules;
       await TimetableService.saveUserTimetable(
         user.id,
@@ -146,11 +150,9 @@ export default function Timetable() {
         isOptimized
       );
 
-      // Update current semester preference
       await TimetableService.updateUserCurrentSemester(user.id, newSemester);
       setCurrentSemester(newSemester);
 
-      // Load data for new semester
       const timetableData = await TimetableService.loadUserTimetable(user.id, newSemester);
       
       if (timetableData) {
@@ -165,7 +167,6 @@ export default function Timetable() {
           setOptimizedModules({});
         }
       } else {
-        // No saved data for new semester
         setSelectedModules({});
         setOptimizedModules({});
         setConstraints({ preferredTimeSlots: {} });
@@ -215,10 +216,22 @@ export default function Timetable() {
     }
   }, [selectedModules, constraints]);
 
-  const handleOptimizedModulesUpdate = useCallback((modules: SelectedModule) => {
-    setOptimizedModules(modules);
+  // Universal modules update handler that works for both optimized and non-optimized
+  const handleUniversalModulesUpdate = useCallback((modules: SelectedModule) => {
+    console.log('handleUniversalModulesUpdate called with:', modules);
+    console.log('Current isOptimized state:', isOptimized);
+    
+    if (isOptimized) {
+      console.log('Updating optimized modules');
+      setOptimizedModules(modules);
+    } else {
+      console.log('Updating selected modules');
+      setSelectedModules(modules);
+    }
+    
     setHasUnsavedChanges(true);
-  }, []);
+    console.log('Marked as having unsaved changes');
+  }, [isOptimized]);
 
   const handleResetOptimization = useCallback(() => {
     setIsOptimized(false);
@@ -281,7 +294,7 @@ export default function Timetable() {
         <TimetableComponent 
           selectedModules={isOptimized ? optimizedModules : selectedModules}
           selectedSemester={currentSemester}
-          onModulesUpdate={isOptimized ? handleOptimizedModulesUpdate : undefined}
+          onModulesUpdate={handleUniversalModulesUpdate}
           isOptimized={isOptimized}
         />
       </div>

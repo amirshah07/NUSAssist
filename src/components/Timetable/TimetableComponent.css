@@ -1,328 +1,218 @@
-/* Timetable.css - Complete styles for timetable component */
+/* TimetableComponent.css - Minimalistic design aligned with roadmap page */
 
-/* Base calendar styles */
+/* Base calendar container - matching navbar theme */
+.timetable-wrapper {
+  background-color: #212121;
+  border-radius: 12px;
+  border: 1px solid #404040;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide default toolbar completely */
+.rbc-toolbar {
+  display: none !important;
+}
+
+/* Calendar base styles */
 .rbc-calendar {
   background-color: #212121 !important;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  color: #fff;
+  color: #ffffff !important;
+  border: none !important;
+  height: 100% !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Toolbar styles */
-.rbc-toolbar {
-  background-color: #212121 !important;
-  color: #FF6B00 !important;
-  padding: 12px 16px;
-  border-radius: 8px 8px 0 0;
-  margin-bottom: 0;
-  border-bottom: 2px solid #FF6B00;
-}
-
-.rbc-toolbar button {
-  color: #fff !important;
-  background: transparent !important;
-  border: 1px solid #FF6B00 !important;
-  border-radius: 4px;
-  padding: 6px 12px;
-  margin: 0 4px;
-  transition: all 0.2s ease;
-}
-
-.rbc-toolbar button:hover {
-  background-color: rgba(255, 107, 0, 0.2) !important;
-  color: #FF6B00 !important;
-}
-
-.rbc-toolbar button.rbc-active {
-  background-color: #FF6B00 !important;
-  color: #212121 !important;
-  font-weight: bold;
-}
-
-/* Header styles */
+/* Header styles - matching navbar */
 .rbc-header {
-  background-color: #212121 !important;
+  background-color: #2a2a2a !important;
   color: #FF6B00 !important;
   font-weight: 600;
-  padding: 12px 0;
+  padding: 16px 8px;
+  font-size: 0.95rem;
   text-transform: uppercase;
-  font-size: 0.9rem;
-  border-bottom: 1px solid rgba(255, 107, 0, 0.3) !important;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #404040 !important;
+  border-right: 1px solid #404040 !important;
 }
 
-/* Time slot styles */
-.rbc-time-header {
-  border-bottom: 2px solid #FF6B00;
+.rbc-header:last-child {
+  border-right: none !important;
 }
 
-.rbc-time-content {
-  border-top: none;
-  background-color: #2d2d2d !important;
-}
-
+/* Time gutter styling */
 .rbc-time-gutter {
-  color: #aaa !important;
-  font-weight: 500;
-  background-color: #212121 !important;
+  background-color: #2a2a2a !important;
+  color: #cccccc !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-right: 1px solid #404040 !important;
+  width: 80px !important;
 }
 
+.rbc-time-gutter .rbc-time-slot {
+  border-bottom: 1px solid #404040 !important;
+  height: 60px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Time header adjustments */
+.rbc-time-header {
+  border-bottom: 1px solid #404040 !important;
+  background-color: #2a2a2a !important;
+}
+
+.rbc-time-header-gutter {
+  background-color: #2a2a2a !important;
+  border-right: 1px solid #404040 !important;
+}
+
+/* Time content area */
+.rbc-time-content {
+  background-color: #212121 !important;
+  border: none !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Time slots - 1 hour intervals */
 .rbc-time-slot {
-  color: #ccc;
-  font-size: 0.8rem;
-  border-bottom: 1px solid rgba(255, 107, 0, 0.1);
+  border-bottom: 1px solid #333333 !important;
+  height: 60px !important;
+  min-height: 60px !important;
 }
 
 .rbc-timeslot-group {
-  border-bottom: 1px solid rgba(255, 107, 0, 0.1) !important;
+  border-bottom: 1px solid #404040 !important;
+  min-height: 60px !important;
+  height: 60px !important;
 }
 
-/* Event styles */
+/* Day columns */
+.rbc-day-bg {
+  background-color: #212121 !important;
+  border-right: 1px solid #333333 !important;
+  transition: background-color 0.2s ease;
+}
+
+.rbc-day-bg:hover {
+  background-color: #2a2a2a !important;
+}
+
+.rbc-day-bg:last-child {
+  border-right: none !important;
+}
+
+/* Current day highlighting - subtle orange glow */
+.rbc-today {
+  background-color: rgba(255, 107, 0, 0.1) !important;
+}
+
+.rbc-date-cell.rbc-today {
+  color: #FF6B00 !important;
+  font-weight: 700 !important;
+}
+
+/* Event styling - beautiful module colors */
 .rbc-event {
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
   border: none !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  padding: 8px 12px !important;
+  margin: 2px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   transition: all 0.2s ease !important;
-  color: #212121;
+  cursor: pointer !important;
+  font-size: 0.85rem !important;
+  border-left: 4px solid rgba(255, 255, 255, 0.3) !important;
 }
 
 .rbc-event:hover {
-  box-shadow: 0 4px 8px rgba(255, 107, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   transform: translateY(-1px) !important;
 }
 
-.rbc-event-content {
-  font-size: 0.85rem;
+.rbc-event:focus {
+  outline: 2px solid #FF6B00 !important;
+  outline-offset: 2px !important;
 }
 
-/* Cell styles */
-.rbc-day-bg + .rbc-day-bg {
-  border-left: 1px solid rgba(255, 107, 0, 0.3) !important;
+/* Event styling - beautiful module colors */
+.rbc-event {
+  border: none !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  padding: 8px 12px !important;
+  margin: 2px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  font-size: 0.85rem !important;
+  border-left: 4px solid rgba(255, 255, 255, 0.3) !important;
 }
 
-.rbc-day-bg {
-  background-color: #2d2d2d !important;
+.rbc-event:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
 }
 
-.rbc-off-range-bg {
-  background-color: #252525;
+.rbc-event:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5) !important;
+  outline-offset: 2px !important;
 }
 
-/* Current time indicator */
-.rbc-current-time-indicator {
-  background-color: #FF6B00 !important;
-  height: 2px;
-  box-shadow: 0 0 6px rgba(255, 107, 0, 0.8);
-}
-
-/* Controls styling */
-.timetable-controls {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-  padding: 15px;
-  background-color: #2d2d2d;
-  border-radius: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.input-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.input-group label {
-  color: #FF6B00;
-  font-weight: 500;
-}
-
-.input-group select {
-  background-color: #212121;
-  color: white;
-  border: 1px solid #FF6B00;
-  border-radius: 4px;
-  padding: 8px 12px;
-  min-width: 150px;
-}
-
-.input-group select:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.3);
-}
-
-.semester-info {
-  color: #FF6B00;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-.modules-info {
-  color: #ccc;
-  font-size: 0.9rem;
-}
-
-.optimization-badge .badge {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-/* Current day styling */
-.rbc-now {
-  background-color: rgba(255, 107, 0, 0.2) !important;
-  color: #FF6B00 !important;
-}
-
-.rbc-date-cell.rbc-now {
-  color: #FF6B00 !important;
-  font-weight: bold;
-}
-
-/* Remove extra space in day headers */
-.rbc-row-bg {
-  display: none;
-}
-
-/* Header row adjustments */
-.rbc-row.rbc-row-resource {
-  min-height: 0;
-}
-
-/* No modules message */
-.no-modules-message {
-  text-align: center;
-  padding: 40px;
-  color: #aaa;
-  font-style: italic;
-}
-
-/* Alternative lesson switching styles */
-.alternatives-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: rgba(156, 39, 176, 0.1);
-  padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid rgba(156, 39, 176, 0.3);
-}
-
-.alternatives-info span {
-  color: #9C27B0;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.cancel-alternatives {
-  background: transparent;
-  border: 1px solid #9C27B0;
-  color: #9C27B0;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.8rem;
-}
-
-.cancel-alternatives:hover {
-  background-color: rgba(156, 39, 176, 0.1);
-  transform: translateY(-1px);
-}
-
-.alternatives-instructions {
-  background-color: rgba(156, 39, 176, 0.1);
-  border: 1px solid rgba(156, 39, 176, 0.3);
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-}
-
-.alternatives-instructions p {
-  margin: 0;
-  color: #9C27B0;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.alternatives-instructions strong {
-  color: #7B1FA2;
-}
-
-/* Alternative lesson animation */
-.rbc-event[style*="rgb(156, 39, 176)"] {
-  animation: pulse 2s infinite;
-  box-shadow: 0 0 10px rgba(156, 39, 176, 0.5) !important;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 10px rgba(156, 39, 176, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 15px rgba(156, 39, 176, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 10px rgba(156, 39, 176, 0.5);
-  }
-}
-
-/* Dimmed lesson styling when showing alternatives */
-.rbc-event[style*="opacity: 0.3"],
-.rbc-event[style*="opacity: 0.4"] {
-  pointer-events: auto;
-  cursor: default;
-}
-
-/* Custom event styling for module, lesson type, class, and venue info */
+/* Custom event content */
 .custom-event {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 3px 5px;
+  gap: 3px;
   overflow: hidden;
-  gap: 1px;
+  text-overflow: ellipsis;
 }
 
 .event-title {
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
+  color: #ffffff;
   line-height: 1.1;
-  color: white;
-  margin-bottom: 1px;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .event-subtitle {
   font-weight: 500;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.95);
   line-height: 1;
-  margin-bottom: 2px;
+  margin: 0;
 }
 
 .event-details {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  margin-top: 2px;
 }
 
 .event-class,
 .event-venue {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.85);
   line-height: 1;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  margin: 0;
 }
 
 .event-class {
@@ -330,38 +220,291 @@
 }
 
 .event-venue {
-  font-weight: 400;
   font-style: italic;
+  font-weight: 400;
+}
+
+/* Controls section - matching clean design */
+.timetable-controls {
+  background: #2a2a2a;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  min-height: auto;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-group label {
+  color: #FF6B00;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.control-group select {
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  min-width: 140px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.control-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.control-group select:hover {
+  border-color: #94a3b8;
+}
+
+/* Info displays */
+.semester-info,
+.modules-info {
+  color: #FF6B00;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.semester-info {
+  color: #FF6B00;
+}
+
+.optimization-badge .badge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+/* Alternative lesson controls */
+.alternatives-info {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(126, 34, 206, 0.1) 100%);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(147, 51, 234, 0.1);
+}
+
+.alternatives-info span {
+  color: #7c3aed;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.cancel-alternatives {
+  background: transparent;
+  border: 1px solid #7c3aed;
+  color: #7c3aed;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cancel-alternatives:hover {
+  background-color: rgba(124, 58, 237, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Alternative instructions */
+.alternatives-instructions {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(126, 34, 206, 0.1) 100%);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 24px;
+  box-shadow: 0 1px 3px rgba(147, 51, 234, 0.1);
+}
+
+.alternatives-instructions p {
+  margin: 0;
+  color: #7c3aed;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.alternatives-instructions strong {
+  color: #6d28d9;
+  font-weight: 600;
+}
+
+/* No modules message */
+.no-modules-message {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+  font-size: 1.1rem;
+  font-style: italic;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin: 20px;
+}
+
+/* Alternative lesson highlighting */
+.rbc-event[style*="rgb(124, 58, 237)"] {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+  animation: pulse-alternative 2s infinite;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.6) !important;
+}
+
+@keyframes pulse-alternative {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(124, 58, 237, 0.8);
+  }
+}
+
+/* Calendar view adjustments */
+.rbc-time-view {
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.rbc-time-content {
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+/* Remove scrollbars completely */
+.rbc-time-content::-webkit-scrollbar {
+  display: none !important;
+}
+
+.rbc-time-content {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Ensure proper time range display (8AM-9PM) */
+.rbc-calendar .rbc-time-view .rbc-time-content {
+  height: calc(100% - 60px) !important;
+}
+
+/* Row backgrounds */
+.rbc-row-bg {
+  display: none !important;
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .timetable-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    padding: 16px 20px;
+    gap: 16px;
   }
   
-  .input-group {
-    width: 100%;
-  }
-  
-  .input-group select {
-    flex-grow: 1;
-  }
-  
-  .alternatives-info {
-    flex-direction: column;
-    align-items: flex-start;
+  .control-group {
     gap: 8px;
   }
   
   .alternatives-instructions {
+    margin: 12px 16px;
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .timetable-controls {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .control-group {
+    justify-content: space-between;
+  }
+  
+  .control-group select {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .alternatives-info {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .rbc-time-gutter {
+    width: 60px !important;
+  }
+  
+  .rbc-time-gutter .rbc-time-slot {
+    font-size: 0.75rem;
+  }
+  
+  .rbc-header {
+    padding: 12px 4px;
+    font-size: 0.85rem;
+  }
+  
+  .event-title {
+    font-size: 0.8rem;
+  }
+  
+  .event-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  .event-class,
+  .event-venue {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .timetable-controls {
+    padding: 12px;
+  }
+  
+  .alternatives-instructions {
+    margin: 8px 12px;
     padding: 10px 12px;
   }
   
   .alternatives-instructions p {
     font-size: 0.85rem;
+  }
+  
+  .rbc-time-gutter {
+    width: 50px !important;
+  }
+  
+  .rbc-time-gutter .rbc-time-slot {
+    font-size: 0.7rem;
+  }
+  
+  .rbc-header {
+    padding: 8px 2px;
+    font-size: 0.8rem;
   }
   
   .event-title {
@@ -376,82 +519,4 @@
   .event-venue {
     font-size: 0.6rem;
   }
-}
-
-@media (max-width: 480px) {
-  .timetable-controls {
-    padding: 10px;
-  }
-  
-  .semester-info,
-  .modules-info {
-    font-size: 0.85rem;
-  }
-  
-  .alternatives-info span {
-    font-size: 0.8rem;
-  }
-  
-  .cancel-alternatives {
-    font-size: 0.75rem;
-    padding: 3px 6px;
-  }
-  
-  .event-title {
-    font-size: 0.7rem;
-  }
-  
-  .event-subtitle {
-    font-size: 0.6rem;
-  }
-  
-  .event-class,
-  .event-venue {
-    font-size: 0.55rem;
-  }
-}
-
-/* Make the calendar non-scrollable and fit the time range exactly */
-.rbc-time-view {
-  height: 100% !important;
-  overflow: hidden !important;
-}
-
-.rbc-time-content {
-  overflow: hidden !important;
-  height: 100% !important;
-}
-
-.rbc-time-slot {
-  min-height: auto !important;
-}
-
-.rbc-timeslot-group {
-  min-height: auto !important;
-}
-
-/* Ensure the calendar displays 8AM-9PM without scrolling */
-.rbc-calendar {
-  height: 100% !important;
-}
-
-.rbc-calendar .rbc-time-view .rbc-time-content {
-  height: calc(100% - 50px) !important;
-  overflow-y: hidden !important;
-}
-
-/* Update the semester info text styling */
-.semester-info span {
-  color: #FF6B00;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-/* Ensure proper spacing for the 8AM-9PM view */
-.rbc-time-view .rbc-time-gutter .rbc-timeslot-group {
-  border-bottom: 1px solid rgba(255, 107, 0, 0.1) !important;
-}
-
-.rbc-time-view .rbc-time-gutter .rbc-time-slot {
-  border-bottom: 1px solid rgba(255, 107, 0, 0.05) !important;
 }

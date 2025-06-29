@@ -49,31 +49,25 @@ export class TimetableService {
   static async loadUserTimetable(userId: string, semester: "sem1" | "sem2"): Promise<TimetableData | null> {
     try {
       return await this.retryOperation(async () => {
-        // Check if user is authenticated first
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error('Session error:', sessionError);
           throw new Error('Authentication error');
         }
-        
         if (!session?.user) {
           console.log('No authenticated user');
           return null;
         }
-
-        // Verify user ID matches session
         if (session.user.id !== userId) {
           console.error('User ID mismatch');
           throw new Error('User ID mismatch');
         }
-
         const { data, error } = await supabase
           .from('user_timetables')
           .select('*')
           .eq('user_id', userId)
           .eq('semester', semester)
           .single();
-
         if (error) {
           if (error.code === 'PGRST116') {
             console.log('No saved timetable found');
@@ -82,9 +76,7 @@ export class TimetableService {
           console.error('Database error:', error);
           throw error;
         }
-
-        const timetable = data as SavedTimetable;
-        
+        const timetable = data as SavedTimetable; 
         return {
           modules: timetable.modules || {},
           timePreferences: timetable.time_preferences || {},
@@ -94,8 +86,6 @@ export class TimetableService {
       });
     } catch (error) {
       console.error('Error loading user timetable:', error);
-      
-      // Return null for authentication errors or no data
       if (error instanceof Error && 
           (error.message.includes('Authentication error') || 
            error.message.includes('User ID mismatch') ||

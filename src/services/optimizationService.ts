@@ -32,7 +32,8 @@ export class OptimizationService {
         constraints: JSON.parse(JSON.stringify(constraints))
       };
 
-      console.log('Sending optimization request:', payload);
+      console.log('Sending optimization request to:', this.apiEndpoint);
+      console.log('Payload:', payload);
 
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
@@ -43,15 +44,28 @@ export class OptimizationService {
       });
 
       if (!response.ok) {
-        throw new Error(`Optimization failed: ${response.statusText}`);
+        let errorText = '';
+        try {
+          errorText = await response.text();
+          console.error('Backend response not OK:', response.status, errorText);
+        } catch (e) {
+          console.error('Failed to read error response:', e);
+        }
+        throw new Error(`Optimization failed: ${response.status} ${response.statusText}`);
       }
 
       const optimizedTimetable = await response.json();
-      console.log('Received optimized timetable:', optimizedTimetable);
+      console.log('Backend optimization successful:', optimizedTimetable);
 
       return optimizedTimetable;
     } catch (error) {
       console.error('Error calling optimization service:', error);
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.warn('Backend server not reachable. Make sure server is running on port 5001');
+      } else if (error instanceof Error && error.message.includes('500')) {
+        console.error('Backend server error. Check server logs for details.');
+      }
       
       console.log('Using fallback optimization...');
       return this.mockOptimize(modules, constraints);
@@ -66,33 +80,28 @@ export class OptimizationService {
       setTimeout(() => {
         const optimized: OptimizedTimetable = {};
 
-        // Helper function to check if a lesson fits in preferred time slots
         const getLessonPreferenceScore = (lesson: any): number => {
           const lessonDay = lesson.day;
           const lessonStartTime = lesson.startTime;
           const lessonEndTime = lesson.endTime;
           
-          // Check how well this lesson fits in the preferred time slots
           let overlapMinutes = 0;
           let totalLessonMinutes = this.parseTimeToMinutes(lessonEndTime) - this.parseTimeToMinutes(lessonStartTime);
           
-          // Check each 30-minute slot during the lesson
           const startMinutes = this.parseTimeToMinutes(lessonStartTime);
           const endMinutes = this.parseTimeToMinutes(lessonEndTime);
           
-          for (let currentMinutes = startMinutes; currentMinutes < endMinutes; currentMinutes += 30) {
+          for (let currentMinutes = startMinutes; currentMinutes < endMinutes; currentMinutes += 60) {
             const timeSlot = this.minutesToTimeSlot(currentMinutes);
             if (constraints.preferredTimeSlots[lessonDay]?.[timeSlot]) {
-              overlapMinutes += Math.min(30, endMinutes - currentMinutes);
+              overlapMinutes += Math.min(60, endMinutes - currentMinutes);
             }
           }
           
-          // Calculate preference score (0-100 based on how much of lesson is in preferred time)
           const preferencePercentage = totalLessonMinutes > 0 ? (overlapMinutes / totalLessonMinutes) * 100 : 0;
           
-          // Add bonus points for common times
           let bonusScore = 0;
-          const commonTimes = ['0700', '0800', '0900', '1000', '1100', '1400', '1500', '1600', '1700'];
+          const commonTimes = ['0800', '0900', '1000', '1100', '1400', '1500', '1600'];
           if (commonTimes.includes(lessonStartTime)) {
             bonusScore += 10;
           }
@@ -100,7 +109,6 @@ export class OptimizationService {
           return preferencePercentage + bonusScore;
         };
 
-        // Helper function to check if two lessons overlap in time
         const lessonsOverlap = (lesson1: any, lesson2: any): boolean => {
           if (lesson1.day !== lesson2.day) return false;
 
@@ -112,7 +120,6 @@ export class OptimizationService {
           return (start1 < end2 && start2 < end1);
         };
 
-        // Collect all lesson options with their preference scores
         const allLessonOptions: Array<{
           moduleCode: string;
           lessonType: string;
@@ -132,7 +139,6 @@ export class OptimizationService {
             lessonTypeGroups[lesson.lessonType].push(lesson);
           });
 
-          // Score all lessons and add them as options
           Object.entries(lessonTypeGroups).forEach(([lessonType, lessons]) => {
             lessons.forEach(lesson => {
               allLessonOptions.push({
@@ -145,7 +151,6 @@ export class OptimizationService {
           });
         });
 
-        // Group by module and lesson type
         const moduleTypeCombinations: { [key: string]: Array<{
           moduleCode: string;
           lessonType: string;
@@ -161,12 +166,10 @@ export class OptimizationService {
           moduleTypeCombinations[combinationKey].push(option);
         });
 
-        // Sort each group by preference score (highest first)
         Object.values(moduleTypeCombinations).forEach(group => {
           group.sort((a, b) => b.preferenceScore - a.preferenceScore);
         });
 
-        // STAGE 1: Try to find non-overlapping solution
         const selectedLessons: Array<{
           moduleCode: string;
           lessonType: string;
@@ -176,15 +179,12 @@ export class OptimizationService {
 
         const unassignedCombinations: string[] = [];
 
-        // Convert to sorted list by preference score for better selection order
         const sortedCombinations = Object.entries(moduleTypeCombinations)
           .sort(([, optionsA], [, optionsB]) => optionsB[0].preferenceScore - optionsA[0].preferenceScore);
 
-        // Try to select lessons without overlaps
         sortedCombinations.forEach(([combinationKey, options]) => {
           let lessonSelected = false;
           
-          // Try to find a lesson that doesn't overlap with already selected lessons
           for (const option of options) {
             const hasOverlap = selectedLessons.some(selected => 
               lessonsOverlap(selected.lesson, option.lesson)
@@ -197,21 +197,18 @@ export class OptimizationService {
             }
           }
           
-          // If no non-overlapping option found, mark for stage 2
           if (!lessonSelected) {
             unassignedCombinations.push(combinationKey);
           }
         });
 
-        // STAGE 2: Handle remaining combinations with minimal overlaps (only if needed)
         if (unassignedCombinations.length > 0) {
-          console.warn(`Could not assign ${unassignedCombinations.length} module-type combinations without overlaps`);
+          console.warn(`Could not assign ${unassignedCombinations.length} combinations without overlaps`);
           console.warn('Attempting minimal overlap assignment...');
 
           unassignedCombinations.forEach(combinationKey => {
             const options = moduleTypeCombinations[combinationKey];
             if (options.length > 0) {
-              // Find the option with highest preference score that has minimal overlaps
               let bestOption = options[0];
               let minOverlapCount = Number.MAX_SAFE_INTEGER;
 
@@ -227,13 +224,12 @@ export class OptimizationService {
                 }
               }
 
-              console.warn(`Forced selection with ${minOverlapCount} overlaps for ${combinationKey}: ${bestOption.lesson.day} ${bestOption.lesson.startTime}-${bestOption.lesson.endTime}`);
+              console.warn(`Forced selection with ${minOverlapCount} overlaps for ${combinationKey}`);
               selectedLessons.push(bestOption);
             }
           });
         }
 
-        // Organize selected lessons by module
         Object.keys(modules).forEach(moduleCode => {
           const moduleLessons = selectedLessons
             .filter(item => item.moduleCode === moduleCode)
@@ -245,7 +241,6 @@ export class OptimizationService {
           };
         });
 
-        // Log optimization results for debugging
         const totalPreferenceScore = selectedLessons.reduce((sum, lesson) => sum + lesson.preferenceScore, 0);
         const overlapCount = this.countOverlaps(selectedLessons.map(item => item.lesson));
         
@@ -260,7 +255,6 @@ export class OptimizationService {
     });
   }
 
-  // Helper function to count overlaps in a lesson list
   private static countOverlaps(lessons: any[]): number {
     let overlapCount = 0;
     for (let i = 0; i < lessons.length; i++) {
@@ -283,14 +277,12 @@ export class OptimizationService {
     return overlapCount;
   }
 
-  // Helper function to parse time string (HHMM) to minutes since midnight
   private static parseTimeToMinutes(timeString: string): number {
     const hour = parseInt(timeString.substring(0, 2));
     const minute = parseInt(timeString.substring(2, 4));
     return hour * 60 + minute;
   }
 
-  // Helper function to convert minutes since midnight to time slot string
   private static minutesToTimeSlot(minutes: number): string {
     const hour = Math.floor(minutes / 60);
     const minute = minutes % 60;
@@ -304,7 +296,6 @@ export class OptimizationService {
       return false;
     }
 
-    // Check if at least some time slots are selected
     const hasAnySelection = Object.values(constraints.preferredTimeSlots).some(daySlots =>
       Object.values(daySlots).some(isSelected => isSelected === true)
     );
@@ -322,7 +313,6 @@ export class OptimizationService {
     );
   }
 
-  // Helper function to check if constraints have meaningful selections
   static hasUsefulConstraints(constraints: TimetableConstraints): boolean {
     if (!this.validateConstraints(constraints)) return false;
     
@@ -333,9 +323,7 @@ export class OptimizationService {
       });
     });
     
-    // Consider constraints useful if user has selected at least 10% of available slots
-    // Updated for 7am-7pm range: 5 days * 24 time slots (7am-7pm, 30min intervals)
-    const totalSlots = 5 * 24;
+    const totalSlots = 5 * 13;
     return selectedSlotCount >= Math.max(5, totalSlots * 0.1);
   }
 }

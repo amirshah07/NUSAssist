@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient.ts";
 import SuccessModal from "./SuccessModal.tsx"; 
 import Loading from "../../components/Loading/Loading.tsx";
 import "./LoginRegister.css" 

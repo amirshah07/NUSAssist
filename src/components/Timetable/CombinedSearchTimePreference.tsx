@@ -60,7 +60,6 @@ export default function CombinedSearchTimePreference({
   const [selectedModules, setSelectedModules] = useState<SelectedModule>(initialModules);
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [selectedSemester, setSelectedSemester] = useState<"sem1" | "sem2">(currentSemester);
 
   // Time preference state
   const [preferences, setPreferences] = useState<TimePreferenceData>(initialTimePreferences);
@@ -72,10 +71,10 @@ export default function CombinedSearchTimePreference({
   const inputRef = useRef<HTMLInputElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Time configuration - 1-hour blocks from 8am to 9pm (13 hours total)
+  // Time configuration
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   const startHour = 8;
-  const endHour = 21; // 9pm
+  const endHour = 21;
 
   const generateTimeSlots = useCallback(() => {
     const slots: string[] = [];
@@ -88,7 +87,7 @@ export default function CombinedSearchTimePreference({
 
   const timeSlots = generateTimeSlots();
 
-  // Initialize preferences with all slots selected by default (available)
+  // Initialize preferences with all slots selected by default
   useEffect(() => {
     if (Object.keys(initialTimePreferences).length > 0) {
       setPreferences(initialTimePreferences);
@@ -98,7 +97,7 @@ export default function CombinedSearchTimePreference({
       days.forEach(day => {
         initialPreferences[day] = {};
         timeSlots.forEach(time => {
-          initialPreferences[day][time] = true; // All times available by default
+          initialPreferences[day][time] = true;
         });
       });
       setPreferences(initialPreferences);
@@ -110,10 +109,6 @@ export default function CombinedSearchTimePreference({
   useEffect(() => {
     setSelectedModules(initialModules);
   }, [initialModules]);
-
-  useEffect(() => {
-    setSelectedSemester(currentSemester);
-  }, [currentSemester]);
 
   useEffect(() => {
     if (Object.keys(initialTimePreferences).length > 0) {
@@ -152,18 +147,35 @@ export default function CombinedSearchTimePreference({
       return;
     }
 
-    const { data, error } = await supabase
-      .from(selectedSemester)
-      .select("moduleCode, semesterData")
-      .ilike("moduleCode", `%${query}%`)
-      .limit(10);
+    // Ensure we use the latest semester value
+    const tableName = currentSemester;
+    console.log(`Searching in ${tableName} table for: ${query}`);
 
-    if (error) {
-      console.error("Error fetching modules:", error.message);
+    try {
+      // Small delay to ensure state consistency
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const { data, error } = await supabase
+        .from(tableName)
+        .select("moduleCode, semesterData")
+        .ilike("moduleCode", `%${query}%`)
+        .limit(10);
+
+      if (error) {
+        console.error("Error fetching modules:", error.message);
+        console.error("Table:", tableName, "Query:", query);
+        console.error("Full error:", error);
+        setSearchResults([]);
+        setShowDropdown(false);
+      } else {
+        console.log(`Found ${data?.length || 0} results in ${tableName}:`, data);
+        setSearchResults(data || []);
+        setShowDropdown(data && data.length > 0);
+      }
+    } catch (error) {
+      console.error("Search failed:", error);
       setSearchResults([]);
-    } else {
-      setSearchResults(data || []);
-      setShowDropdown(true);
+      setShowDropdown(false);
     }
   };
 
@@ -203,6 +215,8 @@ export default function CombinedSearchTimePreference({
       return;
     }
 
+    console.log("Selecting module:", module.moduleCode, "for semester:", currentSemester);
+
     setSelectedModules(prev => ({
       ...prev,
       [module.moduleCode]: module.semesterData
@@ -225,13 +239,18 @@ export default function CombinedSearchTimePreference({
 
   const handleSemesterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSemester = e.target.value as "sem1" | "sem2";
-    setSelectedSemester(newSemester);
-    if (onSemesterChange) {
-      onSemesterChange(newSemester);
-    }
+    console.log(`Changing semester from ${currentSemester} to ${newSemester}`);
+    
+    // Clear search state immediately to prevent confusion
     setSearchQuery("");
     setSearchResults([]);
     setShowDropdown(false);
+    setHighlightedIndex(-1);
+    
+    // Call parent's semester change handler
+    if (onSemesterChange) {
+      onSemesterChange(newSemester);
+    }
   };
 
   // Time preference functions
@@ -310,7 +329,7 @@ export default function CombinedSearchTimePreference({
     days.forEach(day => {
       clearedPreferences[day] = {};
       timeSlots.forEach(time => {
-        clearedPreferences[day][time] = false; // Block all times
+        clearedPreferences[day][time] = false;
       });
     });
     setPreferences(clearedPreferences);
@@ -322,7 +341,7 @@ export default function CombinedSearchTimePreference({
     days.forEach(day => {
       allSelectedPreferences[day] = {};
       timeSlots.forEach(time => {
-        allSelectedPreferences[day][time] = true; // Available all times
+        allSelectedPreferences[day][time] = true;
       });
     });
     setPreferences(allSelectedPreferences);
@@ -402,7 +421,7 @@ export default function CombinedSearchTimePreference({
           <label htmlFor="semester-select">Planning for:</label>
           <select 
             id="semester-select"
-            value={selectedSemester} 
+            value={currentSemester} 
             onChange={handleSemesterChange}
             className="semester-dropdown"
           >
@@ -413,7 +432,7 @@ export default function CombinedSearchTimePreference({
 
         {Object.keys(selectedModules).length > 0 && (
           <div className="selected-modules">
-            <h3>Selected modules for {selectedSemester}:</h3>
+            <h3>Selected modules for {currentSemester}:</h3>
             <div className="module-tags">
               {Object.keys(selectedModules).map(moduleCode => (
                 <span key={moduleCode} className="module-tag">
@@ -436,7 +455,7 @@ export default function CombinedSearchTimePreference({
           <input
             ref={inputRef}
             type="text"
-            placeholder={`Search ${selectedSemester} modules by code`}
+            placeholder={`Search ${currentSemester} modules by code`}
             value={searchQuery}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
@@ -471,7 +490,7 @@ export default function CombinedSearchTimePreference({
           {showDropdown && searchQuery && searchResults.length === 0 && (
             <div className="dropdown">
               <div className="dropdown-item no-results">
-                No modules found for "{searchQuery}" in {selectedSemester}
+                No modules found for "{searchQuery}" in {currentSemester}
               </div>
             </div>
           )}
