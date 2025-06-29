@@ -3,6 +3,7 @@
 import sys
 import json
 import argparse
+import traceback
 from optimized_timetable_optimizer import TimetableOptimizer
 
 def main():
@@ -15,9 +16,18 @@ def main():
     args = parser.parse_args()
     
     try:
-        with open(args.input_file, 'r') as f:
-            data = json.load(f)
+        # Read input file
+        try:
+            with open(args.input_file, 'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print(f"Error: Input file {args.input_file} not found", file=sys.stderr)
+            sys.exit(1)
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid JSON in input file - {e}", file=sys.stderr)
+            sys.exit(1)
         
+        # Extract modules and constraints
         modules = data.get('modules', {})
         constraints = data.get('constraints', {})
         
@@ -25,34 +35,67 @@ def main():
             print(f"Loaded {len(modules)} modules", file=sys.stderr)
             print(f"Constraints: {constraints}", file=sys.stderr)
         
-        optimizer = TimetableOptimizer(args.locations)
+        # Validate input data
+        if not modules:
+            print("Error: No modules found in input data", file=sys.stderr)
+            sys.exit(1)
+        
+        if not constraints:
+            print("Error: No constraints found in input data", file=sys.stderr)
+            sys.exit(1)
+        
+        # Initialize optimizer
+        try:
+            optimizer = TimetableOptimizer(args.locations)
+        except Exception as e:
+            print(f"Error initializing optimizer: {e}", file=sys.stderr)
+            if args.verbose:
+                traceback.print_exc(file=sys.stderr)
+            sys.exit(1)
         
         if args.verbose:
             print("Starting optimization...", file=sys.stderr)
         
-        result = optimizer.optimize_timetable(modules, constraints)
+        # Run optimization
+        try:
+            result = optimizer.optimize_timetable(modules, constraints)
+        except Exception as e:
+            print(f"Error during optimization: {e}", file=sys.stderr)
+            if args.verbose:
+                traceback.print_exc(file=sys.stderr)
+            sys.exit(1)
         
         if args.verbose:
             print("Optimization complete", file=sys.stderr)
         
-        output_data = json.dumps(result, indent=2)
+        # Prepare output
+        try:
+            output_data = json.dumps(result, indent=2)
+        except Exception as e:
+            print(f"Error serializing result: {e}", file=sys.stderr)
+            sys.exit(1)
         
+        # Write output
         if args.output:
-            with open(args.output, 'w') as f:
-                f.write(output_data)
-            if args.verbose:
-                print(f"Results written to {args.output}", file=sys.stderr)
+            try:
+                with open(args.output, 'w') as f:
+                    f.write(output_data)
+                if args.verbose:
+                    print(f"Results written to {args.output}", file=sys.stderr)
+            except Exception as e:
+                print(f"Error writing to output file: {e}", file=sys.stderr)
+                sys.exit(1)
         else:
+            # Output to stdout
             print(output_data)
             
-    except FileNotFoundError as e:
-        print(f"Error: File not found - {e}", file=sys.stderr)
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in input file - {e}", file=sys.stderr)
+    except KeyboardInterrupt:
+        print("Optimization interrupted by user", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        if args.verbose:
+            traceback.print_exc(file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":

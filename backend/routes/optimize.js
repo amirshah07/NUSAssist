@@ -46,7 +46,7 @@ router.post('/optimize-timetable', async (req, res) => {
       });
     }
 
-    console.log(`Processing ${Object.keys(modules).length} modules with constraints:`, constraints);
+    console.log(`Processing ${Object.keys(modules).length} modules with constraints`);
 
     const timestamp = Date.now();
     const tempInputFile = path.join(tempDir, `optimization_input_${timestamp}.json`);
@@ -69,7 +69,8 @@ router.post('/optimize-timetable', async (req, res) => {
       await fs.unlink(tempInputFile).catch(() => {});
       return res.status(500).json({ 
         error: 'Optimization files not found',
-        missing: error.path
+        missing: error.path,
+        suggestion: 'Make sure optimize_cli.py and venues.json exist in the scripts directory'
       });
     }
 
@@ -81,26 +82,29 @@ router.post('/optimize-timetable', async (req, res) => {
       '-v'
     ], {
       stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: path.dirname(pythonScriptPath)
+      cwd: path.dirname(pythonScriptPath),
+      env: { ...process.env, PYTHONUNBUFFERED: '1' }
     });
 
     let outputData = '';
     let errorData = '';
 
     pythonProcess.stdout.on('data', (data) => {
-      outputData += data.toString();
+      const output = data.toString();
+      outputData += output;
+      console.log('Python stdout:', output.trim());
     });
 
     pythonProcess.stderr.on('data', (data) => {
       const errorMsg = data.toString();
       errorData += errorMsg;
-      console.log('Python log:', errorMsg.trim());
+      console.log('Python stderr:', errorMsg.trim());
     });
 
     const timeout = setTimeout(() => {
       console.log('Optimization timeout, killing process');
       pythonProcess.kill('SIGTERM');
-    }, 60000);
+    }, 90000); // Increased timeout to 90 seconds
 
     pythonProcess.on('close', async (code) => {
       clearTimeout(timeout);
@@ -111,22 +115,54 @@ router.post('/optimize-timetable', async (req, res) => {
         if (code !== 0) {
           console.error(`Python process failed with code: ${code}`);
           console.error('Error details:', errorData);
+          
+          // Try to extract meaningful error message
+          let errorMessage = 'Unknown optimization error';
+          if (errorData.includes('location')) {
+            errorMessage = 'Venue location data issue. Check venues.json file format.';
+          } else if (errorData.includes('ortools')) {
+            errorMessage = 'OR-Tools library issue. Make sure ortools is installed: pip install ortools';
+          } else if (errorData.includes('ModuleNotFoundError')) {
+            errorMessage = 'Missing Python dependencies. Run: pip install ortools';
+          } else if (errorData.includes('KeyError')) {
+            errorMessage = 'Data format error in input modules or constraints';
+          }
+          
           return res.status(500).json({ 
             error: 'Optimization process failed',
             code: code,
-            details: errorData.split('\n').slice(-5).join('\n')
+            details: errorMessage,
+            fullError: errorData.split('\n').slice(-10).join('\n')
           });
         }
 
         if (!outputData.trim()) {
           console.error('No output from Python process');
           return res.status(500).json({ 
-            error: 'No optimization result received'
+            error: 'No optimization result received',
+            suggestion: 'Python script may have crashed silently'
           });
         }
 
         try {
-          const result = JSON.parse(outputData);
+          // Try to find JSON in the output (in case there's other text)
+          const lines = outputData.split('\n');
+          let jsonLine = '';
+          
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+              jsonLine = trimmed;
+              break;
+            }
+          }
+          
+          if (!jsonLine) {
+            // Fallback: try to parse the entire output
+            jsonLine = outputData.trim();
+          }
+          
+          const result = JSON.parse(jsonLine);
           console.log('Optimization completed successfully');
           
           const resultModules = Object.keys(result);
@@ -136,11 +172,12 @@ router.post('/optimize-timetable', async (req, res) => {
 
         } catch (parseError) {
           console.error('Failed to parse Python output:', parseError.message);
-          console.error('Raw output (first 500 chars):', outputData.substring(0, 500));
+          console.error('Raw output (first 1000 chars):', outputData.substring(0, 1000));
           
           res.status(500).json({ 
             error: 'Failed to parse optimization result',
-            details: parseError.message
+            details: parseError.message,
+            suggestion: 'Python script output format may be incorrect'
           });
         }
 
@@ -158,8 +195,13 @@ router.post('/optimize-timetable', async (req, res) => {
       
       await fs.unlink(tempInputFile).catch(() => {});
       
+      let errorMessage = 'Failed to start optimization process';
+      if (error.code === 'ENOENT') {
+        errorMessage = 'Python3 not found. Make sure Python 3 is installed and accessible.';
+      }
+      
       res.status(500).json({ 
-        error: 'Failed to start optimization process',
+        error: errorMessage,
         details: error.message,
         suggestion: 'Make sure Python 3 and ortools are installed'
       });

@@ -1,5 +1,6 @@
 import json
 import math
+import sys
 from typing import Dict, List, Any, Optional
 from ortools.sat.python import cp_model
 
@@ -8,17 +9,24 @@ class TimetableOptimizer:
         try:
             with open(locations_file, 'r') as f:
                 self.locations = json.load(f)
-            print(f"Loaded {len(self.locations)} venue locations from {locations_file}")
+            print(f"Loaded {len(self.locations)} venue locations from {locations_file}", file=sys.stderr)
         except FileNotFoundError:
-            print(f"Warning: {locations_file} not found. Using default locations.")
+            print(f"Warning: {locations_file} not found. Using default locations.", file=sys.stderr)
+            self.locations = {}
+        except Exception as e:
+            print(f"Error loading venues file: {e}", file=sys.stderr)
             self.locations = {}
             
         self._distance_cache = {}
         self._precompute_distances()
 
     def _precompute_distances(self):
+        if not self.locations:
+            print("No venue data available, skipping distance computation", file=sys.stderr)
+            return
+            
         venues = list(self.locations.keys())
-        print(f"Pre-computing distances for {len(venues)} venues...")
+        print(f"Pre-computing distances for {len(venues)} venues...", file=sys.stderr)
         
         for i, venue1 in enumerate(venues):
             for j, venue2 in enumerate(venues):
@@ -26,437 +34,366 @@ class TimetableOptimizer:
                     if venue1 == venue2:
                         distance = 0
                     else:
-                        loc1 = self.locations[venue1]["location"]
-                        loc2 = self.locations[venue2]["location"]
-                        distance = self._haversine_distance(
-                            loc1["y"], loc1["x"], loc2["y"], loc2["x"]
-                        )
+                        try:
+                            distance = self._get_venue_distance(venue1, venue2)
+                        except Exception as e:
+                            print(f"Error calculating distance between {venue1} and {venue2}: {e}", file=sys.stderr)
+                            distance = 500
                     
                     self._distance_cache[(venue1, venue2)] = distance
                     self._distance_cache[(venue2, venue1)] = distance
         
-        print(f"Distance matrix computed with {len(self._distance_cache)} entries")
+        print(f"Distance matrix computed with {len(self._distance_cache)} entries", file=sys.stderr)
+
+    def _get_venue_distance(self, venue1: str, venue2: str) -> float:
+        if venue1 not in self.locations or venue2 not in self.locations:
+            return 1000
+            
+        venue1_data = self.locations[venue1]
+        venue2_data = self.locations[venue2]
+        
+        loc1 = None
+        loc2 = None
+        
+        if 'location' in venue1_data:
+            loc1 = venue1_data['location']
+        elif 'coordinates' in venue1_data:
+            loc1 = venue1_data['coordinates']
+        elif 'x' in venue1_data and 'y' in venue1_data:
+            loc1 = {'x': venue1_data['x'], 'y': venue1_data['y']}
+        
+        if 'location' in venue2_data:
+            loc2 = venue2_data['location']
+        elif 'coordinates' in venue2_data:
+            loc2 = venue2_data['coordinates']
+        elif 'x' in venue2_data and 'y' in venue2_data:
+            loc2 = {'x': venue2_data['x'], 'y': venue2_data['y']}
+        
+        if not loc1 or not loc2:
+            return 500
+        
+        try:
+            lon1 = loc1.get('x', 0)
+            lat1 = loc1.get('y', 0)
+            lon2 = loc2.get('x', 0)
+            lat2 = loc2.get('y', 0)
+            
+            return self._haversine_distance(lat1, lon1, lat2, lon2)
+        except Exception as e:
+            print(f"Error extracting coordinates: {e}", file=sys.stderr)
+            return 500
 
     def calculate_distance(self, venue1: str, venue2: str) -> float:
         cache_key = (venue1, venue2)
         if cache_key in self._distance_cache:
             return self._distance_cache[cache_key]
-        
         if venue1 not in self.locations or venue2 not in self.locations:
-            print(f"Warning: Unknown venue(s): {venue1}, {venue2}")
             return 1000
-        
         if venue1 == venue2:
             return 0
-        
-        loc1 = self.locations[venue1]["location"]
-        loc2 = self.locations[venue2]["location"]
-        
-        lon1, lat1 = loc1["x"], loc1["y"]
-        lon2, lat2 = loc2["x"], loc2["y"]
-        
-        distance = self._haversine_distance(lat1, lon1, lat2, lon2)
-        
+        distance = self._get_venue_distance(venue1, venue2)
         self._distance_cache[(venue1, venue2)] = distance
         self._distance_cache[(venue2, venue1)] = distance
-        
         return distance
     
     def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        R = 6371000
-        
-        lat1_rad = math.radians(lat1)
-        lon1_rad = math.radians(lon1)
-        lat2_rad = math.radians(lat2)
-        lon2_rad = math.radians(lon2)
-        
-        dlat = lat2_rad - lat1_rad
-        dlon = lon2_rad - lon1_rad
-        
-        a = (math.sin(dlat / 2) ** 2 + 
-             math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2)
-        c = 2 * math.asin(math.sqrt(a))
-        
-        distance = R * c
-        return distance
+        try:
+            R = 6371000
+            lat1_rad = math.radians(float(lat1))
+            lon1_rad = math.radians(float(lon1))
+            lat2_rad = math.radians(float(lat2))
+            lon2_rad = math.radians(float(lon2))
+            dlat = lat2_rad - lat1_rad
+            dlon = lon2_rad - lon1_rad
+            a = (math.sin(dlat / 2) ** 2 + 
+                 math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2)
+            c = 2 * math.asin(math.sqrt(a))
+            distance = R * c
+            return distance
+        except Exception as e:
+            print(f"Error in haversine calculation: {e}", file=sys.stderr)
+            return 500
 
     def time_to_minutes(self, time_str: str) -> int:
-        if len(time_str) == 4:
-            time_str = f"{time_str[:2]}:{time_str[2:]}"
-        return int(time_str[:2]) * 60 + int(time_str[3:])
+        """Convert time string to minutes with error handling"""
+        try:
+            if len(time_str) == 4:
+                time_str = f"{time_str[:2]}:{time_str[2:]}"
+            return int(time_str[:2]) * 60 + int(time_str[3:])
+        except (ValueError, IndexError) as e:
+            print(f"Error parsing time {time_str}: {e}", file=sys.stderr)
+            return 0
 
     def minutes_to_time(self, minutes: int) -> str:
-        return f"{minutes // 60:02d}:{minutes % 60:02d}"
+        """Convert minutes to time string"""
+        try:
+            return f"{minutes // 60:02d}:{minutes % 60:02d}"
+        except Exception:
+            return "00:00"
 
-    def calculate_lesson_preference_score(self, lesson: Dict[str, Any], preferred_time_slots: Dict[str, Dict[str, bool]]) -> int:
-        """Calculate how well a lesson fits into the user's preferred time slots (now 1-hour blocks)."""
-        lesson_day = lesson["day"]
-        lesson_start = self.time_to_minutes(lesson["startTime"])
-        lesson_end = self.time_to_minutes(lesson["endTime"])
-        
-        # Get the day preferences, default to empty if day not found
-        day_preferences = preferred_time_slots.get(lesson_day, {})
-        
-        # Check overlap with preferred time slots (1-hour intervals)
-        overlap_minutes = 0
-        total_lesson_minutes = lesson_end - lesson_start
-        
-        # Check each hour during the lesson
-        current_time = lesson_start
-        while current_time < lesson_end:
-            # Convert current time to time slot string (HHMM format, only hours)
-            hours = current_time // 60
-            time_slot = f"{hours:02d}00"
+    def calculate_time_preference_penalty(self, lesson: Dict[str, Any], preferred_time_slots: Dict[str, Dict[str, bool]]) -> int:   
+        # Calculate penalty for lessons that fall in blocked time slots.
+        # Returns 0 for fully available time, higher values for blocked times.
+        try:
+            lesson_day = lesson.get("day", "")
+            lesson_start_time = lesson.get("startTime", "0000")
+            lesson_end_time = lesson.get("endTime", "0000")
             
-            # Check if this time slot is preferred
-            if day_preferences.get(time_slot, False):
-                # Calculate overlap for this 1-hour slot
-                slot_end = current_time + 60
-                actual_overlap = min(slot_end, lesson_end) - current_time
-                overlap_minutes += actual_overlap
+            lesson_start = self.time_to_minutes(lesson_start_time)
+            lesson_end = self.time_to_minutes(lesson_end_time)
             
-            current_time += 60
+            day_preferences = preferred_time_slots.get(lesson_day, {})
+            
+            blocked_minutes = 0
+            total_lesson_minutes = lesson_end - lesson_start
+            
+            if total_lesson_minutes <= 0:
+                return 1000  # Heavy penalty for invalid lessons
+            current_time = lesson_start
+            while current_time < lesson_end:
+                hours = current_time // 60
+                time_slot = f"{hours:02d}00"
+                
+                if not day_preferences.get(time_slot, True):  # Default to available if not specified
+                    slot_end = current_time + 60
+                    actual_blocked = min(slot_end, lesson_end) - current_time
+                    blocked_minutes += actual_blocked
+                
+                current_time += 60
+            
+            # Calculate penalty percentage (0-100, higher is worse)
+            penalty_percentage = (blocked_minutes / total_lesson_minutes) * 100
+            return int(penalty_percentage)
+            
+        except Exception as e:
+            print(f"Error calculating time penalty: {e}", file=sys.stderr)
+            return 50  # Medium penalty for error cases
+
+    def calculate_travel_time(self, lesson1: Dict[str, Any], lesson2: Dict[str, Any]) -> float:
+        if lesson1["day"] != lesson2["day"]:
+            return 0  # no travel needed on different days
         
-        # Calculate preference percentage (0-100)
-        if total_lesson_minutes > 0:
-            preference_percentage = (overlap_minutes / total_lesson_minutes) * 100
-        else:
-            preference_percentage = 0
-            
-        return int(preference_percentage)
+        venue1 = lesson1.get("venue", "")
+        venue2 = lesson2.get("venue", "")
+        
+        if venue1 == venue2:
+            return 0  
+        distance_meters = self.calculate_distance(venue1, venue2)
+        walking_speed_mps = 1.4  # 1.4 m/s = ~5 km/h walking speed
+        travel_time_minutes = (distance_meters / walking_speed_mps) / 60
+        
+        return travel_time_minutes + 2  # Add 2 minutes buffer
 
     def optimize_timetable(self, modules: Dict[str, Any], constraints: Dict[str, Any]) -> Dict[str, Any]:
-        model = cp_model.CpModel()
-        
-        # Extract preferred time slots from constraints
-        preferred_time_slots = constraints.get("preferredTimeSlots", {})
-        
-        all_lessons = []
-        for module_code, data in modules.items():
-            if 'timetable' not in data or not data['timetable']:
-                continue
-                
-            for lesson in data["timetable"]:
-                lesson_copy = lesson.copy()
-                lesson_copy["moduleCode"] = module_code
-                all_lessons.append(lesson_copy)
-        
-        if not all_lessons:
-            return modules
-        
-        # Create decision variables for each lesson
-        lesson_vars = {}
-        for i, lesson in enumerate(all_lessons):
-            lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-            lesson_vars[lesson_id] = model.NewBoolVar(lesson_id)
-        
-        # Hard constraint: exactly one lesson per module per lesson type
-        for module_code, data in modules.items():
-            if 'timetable' not in data or not data['timetable']:
-                continue
-                
-            lesson_types = set()
-            for lesson in data["timetable"]:
-                lesson_types.add(lesson["lessonType"])
+        try:
+            model = cp_model.CpModel()
             
-            for lesson_type in lesson_types:
-                lesson_options = []
-                for i, lesson in enumerate(all_lessons):
-                    if (lesson["moduleCode"] == module_code and 
-                        lesson["lessonType"] == lesson_type):
-                        lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                        lesson_options.append(lesson_vars[lesson_id])
-                
-                if lesson_options:
-                    model.AddExactlyOne(lesson_options)
-        
-        # Collect overlap and proximity constraints
-        overlapping_pairs = []
-        proximity_constraints = []
-        
-        for i, lesson1 in enumerate(all_lessons):
-            for j, lesson2 in enumerate(all_lessons):
-                if i >= j or lesson1["day"] != lesson2["day"]:
+            preferred_time_slots = constraints.get("preferredTimeSlots", {})
+            
+            all_lessons = []
+            for module_code, data in modules.items():
+                if 'timetable' not in data or not data['timetable']:
                     continue
-                
-                lesson1_id = f"{lesson1['moduleCode']}_{lesson1['lessonType']}_{lesson1['classNo']}_{i}"
-                lesson2_id = f"{lesson2['moduleCode']}_{lesson2['lessonType']}_{lesson2['classNo']}_{j}"
-                
-                start1 = self.time_to_minutes(lesson1["startTime"])
-                end1 = self.time_to_minutes(lesson1["endTime"])
-                start2 = self.time_to_minutes(lesson2["startTime"])
-                end2 = self.time_to_minutes(lesson2["endTime"])
-                
-                # Check for time overlap
-                if (start1 < end2 and start2 < end1):
-                    overlapping_pairs.append((lesson1_id, lesson2_id))
-                else:
-                    # Check proximity constraints for back-to-back classes
-                    distance_meters = self.calculate_distance(lesson1["venue"], lesson2["venue"])
-                    walking_speed_per_minute = 83.33  # meters per minute (5 km/h)
-                    travel_time_minutes = distance_meters / walking_speed_per_minute
-                    buffer_time = 2  # minutes
-                    total_travel_time = travel_time_minutes + buffer_time
                     
+                for lesson in data["timetable"]:
+                    lesson_copy = lesson.copy()
+                    lesson_copy["moduleCode"] = module_code
+                    all_lessons.append(lesson_copy)
+            
+            if not all_lessons:
+                print("No lessons found in modules", file=sys.stderr)
+                return modules
+            
+            print(f"Processing {len(all_lessons)} total lessons", file=sys.stderr)
+            lesson_vars = {}
+            for i, lesson in enumerate(all_lessons):
+                lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
+                lesson_vars[lesson_id] = model.NewBoolVar(lesson_id)
+            
+            # CONSTRAINT 1: Exactly one lesson per module per lesson type (HARD)
+            for module_code, data in modules.items():
+                if 'timetable' not in data or not data['timetable']:
+                    continue
+                    
+                lesson_types = set()
+                for lesson in data["timetable"]:
+                    lesson_types.add(lesson["lessonType"])
+                
+                for lesson_type in lesson_types:
+                    lesson_options = []
+                    for i, lesson in enumerate(all_lessons):
+                        if (lesson["moduleCode"] == module_code and 
+                            lesson["lessonType"] == lesson_type):
+                            lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
+                            lesson_options.append(lesson_vars[lesson_id])
+                    
+                    if lesson_options:
+                        model.AddExactlyOne(lesson_options)
+            
+            # CONSTRAINT 2: No time overlaps (HARD)
+            overlapping_pairs = []
+            for i, lesson1 in enumerate(all_lessons):
+                for j, lesson2 in enumerate(all_lessons):
+                    if i >= j or lesson1["day"] != lesson2["day"]:
+                        continue
+                    
+                    start1 = self.time_to_minutes(lesson1["startTime"])
+                    end1 = self.time_to_minutes(lesson1["endTime"])
+                    start2 = self.time_to_minutes(lesson2["startTime"])
+                    end2 = self.time_to_minutes(lesson2["endTime"])
+                    
+                    if (start1 < end2 and start2 < end1):
+                        lesson1_id = f"{lesson1['moduleCode']}_{lesson1['lessonType']}_{lesson1['classNo']}_{i}"
+                        lesson2_id = f"{lesson2['moduleCode']}_{lesson2['lessonType']}_{lesson2['classNo']}_{j}"
+                        overlapping_pairs.append((lesson1_id, lesson2_id))
+            
+            print(f"Found {len(overlapping_pairs)} overlapping pairs", file=sys.stderr)
+            
+            for lesson1_id, lesson2_id in overlapping_pairs:
+                model.Add(lesson_vars[lesson1_id] + lesson_vars[lesson2_id] <= 1)
+            
+            # CONSTRAINT 3: Travel time constraints (SOFT via objective)
+            travel_penalty_pairs = []
+            for i, lesson1 in enumerate(all_lessons):
+                for j, lesson2 in enumerate(all_lessons):
+                    if i >= j or lesson1["day"] != lesson2["day"]:
+                        continue
+                    
+                    start1 = self.time_to_minutes(lesson1["startTime"])
+                    end1 = self.time_to_minutes(lesson1["endTime"])
+                    start2 = self.time_to_minutes(lesson2["startTime"])
+                    end2 = self.time_to_minutes(lesson2["endTime"])
+                    
+                    # Check if lessons are back-to-back and require travel
                     time_gap = start2 - end1
-                    max_walking_time = 10  # minutes
-                    
-                    # If classes are consecutive but impossible to reach in time
-                    if 0 < time_gap < total_travel_time and total_travel_time > max_walking_time:
-                        proximity_constraints.append((lesson1_id, lesson2_id))
-        
-        print(f"Found {len(overlapping_pairs)} overlapping pairs and {len(proximity_constraints)} proximity constraints")
-        
-        # Strategy 1: Try to find non-overlapping solution with maximum preferences
-        print("Strategy 1: Attempting non-overlapping solution with maximum preferences...")
-        
-        # Add no-overlap constraints
-        for lesson1_id, lesson2_id in overlapping_pairs:
-            model.Add(lesson_vars[lesson1_id] + lesson_vars[lesson2_id] <= 1)
-        
-        # Add proximity constraints
-        for lesson1_id, lesson2_id in proximity_constraints:
-            model.Add(lesson_vars[lesson1_id] + lesson_vars[lesson2_id] <= 1)
-        
-        # Create objective: maximize preference scores
-        objective_terms = []
-        
-        # Primary objective: maximize lessons in preferred time slots (high weight)
-        for i, lesson in enumerate(all_lessons):
-            lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-            preference_score = self.calculate_lesson_preference_score(lesson, preferred_time_slots)
+                    if 0 <= time_gap <= 30:  # Up to 30 minutes gap
+                        travel_time = self.calculate_travel_time(lesson1, lesson2)
+                        if travel_time > time_gap:
+                            lesson1_id = f"{lesson1['moduleCode']}_{lesson1['lessonType']}_{lesson1['classNo']}_{i}"
+                            lesson2_id = f"{lesson2['moduleCode']}_{lesson2['lessonType']}_{lesson2['classNo']}_{j}"
+                            penalty = int((travel_time - time_gap) * 10)  # Scale penalty
+                            travel_penalty_pairs.append((lesson1_id, lesson2_id, penalty))
             
-            if preference_score > 0:
-                # Give very high weight to preference scores
-                objective_terms.append(lesson_vars[lesson_id] * preference_score * 100)
-        
-        # Secondary objectives with lower weights
-        common_start_times = [420, 480, 540, 600, 660, 840, 900, 960, 1020]  # Common class times
-        for i, lesson in enumerate(all_lessons):
-            lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-            start_time = self.time_to_minutes(lesson["startTime"])
+            print(f"Found {len(travel_penalty_pairs)} potential travel issues", file=sys.stderr)
             
-            if start_time in common_start_times:
-                objective_terms.append(lesson_vars[lesson_id] * 10)
-        
-        # Set the objective
-        if objective_terms:
-            model.Maximize(sum(objective_terms))
-        
-        # Try to solve the model
-        solver = cp_model.CpSolver()
-        solver.parameters.max_time_in_seconds = 30.0
-        status = solver.Solve(model)
-        
-        # Strategy 2: If no solution found, try with relaxed proximity constraints
-        if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-            print("Strategy 2: Relaxing proximity constraints, keeping no-overlap...")
+            # OBJECTIVE: Minimize time preference violations (PRIMARY)
+            objective_terms = []
             
-            # Create new model with only overlap constraints
-            model2 = cp_model.CpModel()
-            lesson_vars2 = {}
+            # 1. TIME PREFERENCE PENALTIES (HIGHEST PRIORITY)
+            time_preference_weight = 10000  # Very high weight
             for i, lesson in enumerate(all_lessons):
                 lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                lesson_vars2[lesson_id] = model2.NewBoolVar(lesson_id)
-            
-            # Add mandatory constraints (one per module-type)
-            for module_code, data in modules.items():
-                if 'timetable' not in data or not data['timetable']:
-                    continue
-                    
-                lesson_types = set()
-                for lesson in data["timetable"]:
-                    lesson_types.add(lesson["lessonType"])
+                time_penalty = self.calculate_time_preference_penalty(lesson, preferred_time_slots)
                 
-                for lesson_type in lesson_types:
-                    lesson_options = []
-                    for i, lesson in enumerate(all_lessons):
-                        if (lesson["moduleCode"] == module_code and 
-                            lesson["lessonType"] == lesson_type):
-                            lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                            lesson_options.append(lesson_vars2[lesson_id])
-                    
-                    if lesson_options:
-                        model2.AddExactlyOne(lesson_options)
+                if time_penalty > 0:
+                    # Minimize penalty (subtract from objective)
+                    objective_terms.append(lesson_vars[lesson_id] * (-time_penalty * time_preference_weight))
             
-            # Add only overlap constraints
-            for lesson1_id, lesson2_id in overlapping_pairs:
-                model2.Add(lesson_vars2[lesson1_id] + lesson_vars2[lesson2_id] <= 1)
+            # 2. TRAVEL TIME PENALTIES (MEDIUM PRIORITY)
+            travel_weight = 100
+            for lesson1_id, lesson2_id, penalty in travel_penalty_pairs:
+                # Create variable for when both lessons are selected
+                both_selected = model.NewBoolVar(f"travel_{lesson1_id}_{lesson2_id}")
+                model.Add(both_selected >= lesson_vars[lesson1_id] + lesson_vars[lesson2_id] - 1)
+                objective_terms.append(both_selected * (-penalty * travel_weight))
             
-            # Same objective with preference focus
-            objective_terms2 = []
-            for i, lesson in enumerate(all_lessons):
-                lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                preference_score = self.calculate_lesson_preference_score(lesson, preferred_time_slots)
-                
-                if preference_score > 0:
-                    objective_terms2.append(lesson_vars2[lesson_id] * preference_score * 100)
-            
+            # 3. PREFERENCE FOR COMMON TIME SLOTS (LOW PRIORITY)
+            common_time_weight = 10
+            common_start_times = [480, 540, 600, 660, 840, 900, 960, 1020]  # 8AM, 9AM, 10AM, 11AM, 2PM, 3PM, 4PM, 5PM
             for i, lesson in enumerate(all_lessons):
                 lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
                 start_time = self.time_to_minutes(lesson["startTime"])
                 
                 if start_time in common_start_times:
-                    objective_terms2.append(lesson_vars2[lesson_id] * 10)
+                    objective_terms.append(lesson_vars[lesson_id] * common_time_weight)
             
-            if objective_terms2:
-                model2.Maximize(sum(objective_terms2))
+            # 4. MINIMIZE GAPS BETWEEN CLASSES (LOW PRIORITY)
+            gap_weight = 5
+            daily_lessons = {}
+            for i, lesson in enumerate(all_lessons):
+                day = lesson["day"]
+                if day not in daily_lessons:
+                    daily_lessons[day] = []
+                lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
+                daily_lessons[day].append((lesson_id, self.time_to_minutes(lesson["startTime"])))
             
-            status = solver.Solve(model2)
-            lesson_vars = lesson_vars2
+            # Bonus for consecutive lessons
+            for day, day_lessons in daily_lessons.items():
+                day_lessons.sort(key=lambda x: x[1])  # Sort by start time
+                for i in range(len(day_lessons) - 1):
+                    lesson1_id, time1 = day_lessons[i]
+                    lesson2_id, time2 = day_lessons[i + 1]
+                    
+                    # If lessons are 1-2 hours apart, give small bonus
+                    time_diff = time2 - time1
+                    if 60 <= time_diff <= 120:
+                        consecutive_var = model.NewBoolVar(f"consecutive_{lesson1_id}_{lesson2_id}")
+                        model.Add(consecutive_var >= lesson_vars[lesson1_id] + lesson_vars[lesson2_id] - 1)
+                        objective_terms.append(consecutive_var * gap_weight)
             
+            # Set objective to maximize (minimize negative penalties)
+            if objective_terms:
+                model.Maximize(sum(objective_terms))
+            
+            # Solve with increased time limit for better solutions
+            solver = cp_model.CpSolver()
+            solver.parameters.max_time_in_seconds = 120.0  # 2 minutes
+            solver.parameters.num_search_workers = 4  # Use multiple threads
+            status = solver.Solve(model)
+            
+            # Extract solution
+            optimized_modules = {}
             if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-                print("Found solution without proximity constraints")
-        
-        # Strategy 3: Last resort - allow minimal overlaps with heavy penalties
-        if status not in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-            print("Strategy 3: Allowing minimal overlaps as last resort...")
-            
-            model3 = cp_model.CpModel()
-            lesson_vars3 = {}
-            for i, lesson in enumerate(all_lessons):
-                lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                lesson_vars3[lesson_id] = model3.NewBoolVar(lesson_id)
-            
-            # Add mandatory constraints (one per module-type)
-            for module_code, data in modules.items():
-                if 'timetable' not in data or not data['timetable']:
-                    continue
-                    
-                lesson_types = set()
-                for lesson in data["timetable"]:
-                    lesson_types.add(lesson["lessonType"])
+                total_time_penalty = 0
+                total_travel_penalty = 0
+                selected_lessons_count = 0
                 
-                for lesson_type in lesson_types:
-                    lesson_options = []
-                    for i, lesson in enumerate(all_lessons):
-                        if (lesson["moduleCode"] == module_code and 
-                            lesson["lessonType"] == lesson_type):
-                            lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                            lesson_options.append(lesson_vars3[lesson_id])
-                    
-                    if lesson_options:
-                        model3.AddExactlyOne(lesson_options)
-            
-            # Create penalty variables for overlaps
-            overlap_penalty_vars = []
-            for lesson1_id, lesson2_id in overlapping_pairs:
-                overlap_var = model3.NewBoolVar(f"overlap_{lesson1_id}_{lesson2_id}")
-                model3.Add(overlap_var >= lesson_vars3[lesson1_id] + lesson_vars3[lesson2_id] - 1)
-                overlap_penalty_vars.append(overlap_var)
-            
-            # Objective: maximize preferences while heavily penalizing overlaps
-            objective_terms3 = []
-            
-            # Preference terms (high weight)
-            for i, lesson in enumerate(all_lessons):
-                lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                preference_score = self.calculate_lesson_preference_score(lesson, preferred_time_slots)
-                
-                if preference_score > 0:
-                    objective_terms3.append(lesson_vars3[lesson_id] * preference_score * 50)
-            
-            # Heavily penalize overlaps
-            for overlap_var in overlap_penalty_vars:
-                objective_terms3.append(overlap_var * (-10000))
-            
-            # Common times bonus (low weight)
-            for i, lesson in enumerate(all_lessons):
-                lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                start_time = self.time_to_minutes(lesson["startTime"])
-                
-                if start_time in common_start_times:
-                    objective_terms3.append(lesson_vars3[lesson_id] * 5)
-            
-            if objective_terms3:
-                model3.Maximize(sum(objective_terms3))
-            
-            status = solver.Solve(model3)
-            lesson_vars = lesson_vars3
-            
-            if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-                print("Found solution with minimal overlaps")
-            else:
-                print("No solution found even with overlaps allowed")
-        else:
-            print("Found non-overlapping solution with preferences optimized")
-        
-        # Extract the solution
-        optimized_modules = {}
-        if status in [cp_model.OPTIMAL, cp_model.FEASIBLE]:
-            total_preference_score = 0
-            selected_lessons_count = 0
-            
-            for module_code, data in modules.items():
-                if 'timetable' not in data or not data['timetable']:
-                    optimized_modules[module_code] = data
-                    continue
-                    
-                optimized_modules[module_code] = {
-                    "moduleCode": module_code,
-                    "timetable": []
-                }
-                
-                for i, lesson in enumerate(all_lessons):
-                    if lesson["moduleCode"] != module_code:
+                for module_code, data in modules.items():
+                    if 'timetable' not in data or not data['timetable']:
+                        optimized_modules[module_code] = data
                         continue
                         
-                    lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
-                    if lesson_id in lesson_vars and solver.Value(lesson_vars[lesson_id]):
-                        clean_lesson = {k: v for k, v in lesson.items() if k != "moduleCode"}
-                        optimized_modules[module_code]["timetable"].append(clean_lesson)
-                        
-                        # Calculate statistics
-                        preference_score = self.calculate_lesson_preference_score(lesson, preferred_time_slots)
-                        total_preference_score += preference_score
-                        selected_lessons_count += 1
+                    optimized_modules[module_code] = {
+                        "moduleCode": module_code,
+                        "timetable": []
+                    }
+                    
+                    for i, lesson in enumerate(all_lessons):
+                        if lesson["moduleCode"] != module_code:
+                            continue
+                            
+                        lesson_id = f"{lesson['moduleCode']}_{lesson['lessonType']}_{lesson['classNo']}_{i}"
+                        if lesson_id in lesson_vars and solver.Value(lesson_vars[lesson_id]):
+                            clean_lesson = {k: v for k, v in lesson.items() if k != "moduleCode"}
+                            optimized_modules[module_code]["timetable"].append(clean_lesson)
+                            
+                            # Calculate statistics
+                            time_penalty = self.calculate_time_preference_penalty(lesson, preferred_time_slots)
+                            total_time_penalty += time_penalty
+                            selected_lessons_count += 1
+                
+                # Calculate travel penalties for selected lessons
+                for lesson1_id, lesson2_id, penalty in travel_penalty_pairs:
+                    if (lesson1_id in lesson_vars and lesson2_id in lesson_vars and 
+                        solver.Value(lesson_vars[lesson1_id]) and solver.Value(lesson_vars[lesson2_id])):
+                        total_travel_penalty += penalty
+                
+                avg_time_penalty = total_time_penalty / selected_lessons_count if selected_lessons_count > 0 else 0
+                
+                print(f"Optimization complete: {selected_lessons_count} lessons selected", file=sys.stderr)
+                print(f"Average time preference penalty: {avg_time_penalty:.1f}% (lower is better)", file=sys.stderr)
+                print(f"Total travel penalty: {total_travel_penalty}", file=sys.stderr)
+                print(f"Solution status: {'OPTIMAL' if status == cp_model.OPTIMAL else 'FEASIBLE'}", file=sys.stderr)
+                
+            else:
+                print(f"Optimization failed with status: {status}", file=sys.stderr)
+                return modules
             
-            # Print optimization results
-            avg_preference_score = total_preference_score / selected_lessons_count if selected_lessons_count > 0 else 0
-            print(f"Optimization complete: {selected_lessons_count} lessons selected")
-            print(f"Average preference score: {avg_preference_score:.1f}%")
+            return optimized_modules
             
-        else:
-            print(f"Optimization failed with status: {status}")
+        except Exception as e:
+            print(f"Error in optimize_timetable: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             return modules
-        
-        return optimized_modules
 
-def main():
-    sample_modules = {
-        "CS2103T": {
-            "timetable": [
-                {
-                    "lessonType": "Lecture",
-                    "classNo": "1",
-                    "day": "Friday",
-                    "startTime": "1400",
-                    "endTime": "1600",
-                    "venue": "LT17"
-                },
-                {
-                    "lessonType": "Tutorial",
-                    "classNo": "T01",
-                    "day": "Wednesday",
-                    "startTime": "0900",
-                    "endTime": "1000",
-                    "venue": "COM1-0201"
-                }
-            ]
-        }
-    }
-    
-    sample_constraints = {
-        "preferredTimeSlots": {
-            "Monday": {"0900": True, "1000": True, "1100": True},
-            "Wednesday": {"0900": True, "1000": True},
-            "Friday": {"1400": True, "1500": True}
-        }
-    }
-    
-    optimizer = TimetableOptimizer()
-    result = optimizer.optimize_timetable(sample_modules, sample_constraints)
-    print(json.dumps(result, indent=2))
-
-if __name__ == "__main__":
-    main()
