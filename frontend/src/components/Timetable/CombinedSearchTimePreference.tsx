@@ -17,9 +17,7 @@ interface TimePreferenceData {
   };
 }
 
-interface TimetableConstraints {
-  preferredTimeSlots: TimePreferenceData;
-}
+
 
 interface CombinedSearchTimePreferenceProps {
   onModulesUpdate?: (modules: SelectedModule) => void;
@@ -46,8 +44,7 @@ export default function CombinedSearchTimePreference({
   currentSemester = "sem1",
   initialModules = {},
   initialTimePreferences = {},
-  disabled = false,
-  hasModules = false,
+  disabled = false, 
   isOptimized = false,
   isOptimizing = false,
   onResetOptimization,
