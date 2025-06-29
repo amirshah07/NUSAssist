@@ -274,7 +274,7 @@ export function SelectedModuleDisplay({
     <div className="selected-modules-display">
       <h3>modules for {semester || 'this semester'}:</h3>
       <div className="module-list">
-        {Object.entries(modules).map(([moduleCode, semesterData]) => (
+        {Object.entries(modules).map(([moduleCode]) => (
           <div key={moduleCode} className="module-item">
             <span className="module-code">{moduleCode}</span>
             {onRemove && (
