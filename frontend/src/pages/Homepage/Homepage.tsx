@@ -1,16 +1,12 @@
 import Navbar from "../../components/Navbar/Navbar";
+import Dashboard from "../../components/Dashboard/Dashboard";
 import "./Homepage.css"
 
 export default function Homepage() {
-    
     return(
-        <>
+        <div className="homepage">
             <Navbar />
-            <div className="homepage-container">
-                <div className="homepage-content">
-                    <h1> HomePage</h1>
-                </div>
-            </div>
-        </>
+            <Dashboard />
+        </div>
     )
 }
