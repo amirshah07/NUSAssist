@@ -1,4 +1,4 @@
-/* CombinedSearchTimePreference.css - Complete styles */
+
 .combined-search-container {
   background-color: #212121;
   border-radius: 8px;
@@ -48,7 +48,7 @@
   background-color: rgba(255, 107, 0, 0.1);
 }
 
-/* Minimized state */
+
 .combined-search-minimized {
   background-color: #212121;
   border-radius: 8px;
@@ -112,7 +112,7 @@
   background-color: rgba(76, 175, 80, 0.1);
 }
 
-/* Search Section */
+
 .search-section {
   margin-bottom: 25px;
 }
@@ -283,7 +283,7 @@
   background-color: transparent;
 }
 
-/* Time Preference Section */
+
 .time-preference-section {
   margin-bottom: 25px;
   border-top: 1px solid rgba(255, 107, 0, 0.3);
@@ -409,7 +409,6 @@
 }
 
 .grid-body {
-  /* No scrolling - show all time slots */
   overflow: visible;
 }
 
@@ -507,7 +506,7 @@
   color: #FF6B00;
 }
 
-/* Optimize Section */
+
 .optimize-section {
   border-top: 1px solid rgba(255, 107, 0, 0.3);
   padding-top: 20px;
@@ -652,7 +651,7 @@
   background: #777;
 }
 
-/* Responsive design */
+
 @media (max-width: 768px) {
   .combined-search-container {
     padding: 15px;

@@ -20,10 +20,11 @@ interface OptimizedTimetable {
 }
 
 export class OptimizationService {
-  // Use environment variable for API endpoint, fallback to localhost for development
   private static apiEndpoint = import.meta.env.VITE_API_URL 
     ? `${import.meta.env.VITE_API_URL}/api/optimize-timetable`
-    : 'http://localhost:5001/api/optimize-timetable';
+    : import.meta.env.PROD 
+      ? 'https://nusassist-backend-144873295069.us-central1.run.app/api/optimize-timetable'
+      : 'http://localhost:8080/api/optimize-timetable';
 
   static async optimizeTimetable(
     modules: SelectedModule,
@@ -243,41 +244,16 @@ export class OptimizationService {
           };
         });
 
-        const totalPreferenceScore = selectedLessons.reduce((sum, lesson) => sum + lesson.preferenceScore, 0);
-        const overlapCount = this.countOverlaps(selectedLessons.map(item => item.lesson));
         
-        console.log(`Mock optimization completed:`);
-        console.log(`- Total preference score: ${totalPreferenceScore}`);
-        console.log(`- Number of overlapping lessons: ${overlapCount}`);
-        console.log(`- Stage 1 assignments: ${selectedLessons.length - unassignedCombinations.length}`);
-        console.log(`- Stage 2 assignments: ${unassignedCombinations.length}`);
+        
+        
 
         resolve(optimized);
       }, 1500);
     });
   }
 
-  private static countOverlaps(lessons: any[]): number {
-    let overlapCount = 0;
-    for (let i = 0; i < lessons.length; i++) {
-      for (let j = i + 1; j < lessons.length; j++) {
-        const lesson1 = lessons[i];
-        const lesson2 = lessons[j];
-        
-        if (lesson1.day === lesson2.day) {
-          const start1 = this.parseTimeToMinutes(lesson1.startTime);
-          const end1 = this.parseTimeToMinutes(lesson1.endTime);
-          const start2 = this.parseTimeToMinutes(lesson2.startTime);
-          const end2 = this.parseTimeToMinutes(lesson2.endTime);
-          
-          if (start1 < end2 && start2 < end1) {
-            overlapCount++;
-          }
-        }
-      }
-    }
-    return overlapCount;
-  }
+  
 
   private static parseTimeToMinutes(timeString: string): number {
     const hour = parseInt(timeString.substring(0, 2));

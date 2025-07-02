@@ -1,4 +1,4 @@
-/* SearchBar.css */
+
 .search-container {
   max-width: 600px;
   margin: 0 auto;
@@ -197,7 +197,7 @@
   background-color: transparent;
 }
 
-/* Scrollbar styling for dropdown */
+
 .dropdown::-webkit-scrollbar {
   width: 8px;
 }

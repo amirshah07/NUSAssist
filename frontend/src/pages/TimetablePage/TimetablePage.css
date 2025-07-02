@@ -1,4 +1,4 @@
-/* TimetablePage.css - Matching navbar color scheme exactly */
+
 
 .timetable-page {
   min-height: 100vh;
@@ -6,10 +6,9 @@
   flex-direction: column;
   padding: 20px;
   gap: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Main timetable section - matching navbar */
+
 .timetable-section {
   background-color: #212121;
   border: 1px solid #404040;
@@ -22,7 +21,7 @@
   overflow: hidden;
 }
 
-/* Constraint warning styling */
+
 .constraint-warning {
   background-color: rgba(255, 193, 7, 0.15);
   border: 1px solid rgba(255, 193, 7, 0.4);
@@ -50,7 +49,7 @@
   color: #ffc107;
 }
 
-/* Optimization status - using the green background you specified */
+
 .optimization-status {
   background: rgba(76, 175, 80, 0.2);
   border: 1px solid rgba(76, 175, 80, 0.4);
@@ -112,7 +111,7 @@
   border-color: #e55a00;
 }
 
-/* Optimizing overlay */
+
 .optimizing-overlay {
   position: fixed;
   top: 0;
@@ -172,7 +171,7 @@
   font-style: italic;
   max-width: 400px;
   line-height: 1.4;
-}/* Responsive design */
+}
 @media (max-width: 1024px) {
   .timetable-page {
     padding: 16px;
@@ -264,7 +263,7 @@
   }
 }
 
-/* Responsive design */
+
 @media (max-width: 1200px) {
   .timetable-page {
     padding: 16px;

@@ -51,7 +51,6 @@ interface AlternativeLessonState {
 }
 
 const getColorForModule = (moduleCode: string): string => {
-  // Beautiful, distinct colors inspired by NUSMods
   const moduleColors = [
     '#3b82f6', // Blue
     '#10b981', // Emerald  
@@ -67,7 +66,7 @@ const getColorForModule = (moduleCode: string): string => {
     '#eab308', // Yellow
   ];
   
-  // Generate consistent color based on module code
+
   let hash = 0;
   for (let i = 0; i < moduleCode.length; i++) {
     hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
