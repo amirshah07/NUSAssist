@@ -1,13 +1,11 @@
 import Navbar from "../../components/Navbar/Navbar";
-export default function Gpa() {
+import Gpa from "../../components/Gpa/Gpa"
+export default function GpaPage() {
 
     return (
-        
-        <> 
-        <Navbar />
-        <h2>
-            GPA page
-         </h2>
-        </>
+        <div className="gpa-page">
+            <Navbar />
+            <Gpa />
+        </div>
     )
 }

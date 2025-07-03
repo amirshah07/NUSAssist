@@ -1,0 +1,85 @@
+/* Stats Section Container */
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+/* Stats Grid Layout */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* Individual Stat Card */
+.stat-card {
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 2px solid #404040;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.stat-card:hover {
+  border-color: #FF6B00;
+  background-color: #323232;
+}
+
+/* Stat Header */
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Stat Label */
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.05em;
+}
+
+/* Stat Icons */
+.stat-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: color 0.2s ease;
+}
+
+.stat-icon-orange {
+  color: #FF6B00;
+}
+
+.stat-icon-blue {
+  color: #4A9EFF;
+}
+
+.stat-icon-purple {
+  color: #B366F5;
+}
+
+/* Stat Value */
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin: 0.7rem 0rem;
+}
+
+.stat-value-primary {
+  color: #FF6B00;
+}
+
+/* Stat Subtitle */
+.stat-subtitle {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,17 @@
+/* Base Container Styles */
+.gpa-container {
+  min-height: 100vh;
+  padding: 3rem 2rem 1rem;
+}
+
+.gpa-content {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .gpa-container {
+    padding: 1.5rem 1rem;
+  }
+}
