@@ -6,15 +6,15 @@ import "./SearchBar.css";
 
 interface ModuleData {
   moduleCode: string;
-  semesterData: any; // idk what json structure u have so just leaving it as any
+  semesterData: any; 
 }
 
 interface SelectedModule {
-  [moduleCode: string]: any; // moduleCode -> semesterData mapping
+  [moduleCode: string]: any; 
 }
 
 interface SearchBarProps {
-  onModulesUpdate?: (modules: SelectedModule) => void; // callback to pass selected modules to parent
+  onModulesUpdate?: (modules: SelectedModule) => void; 
 }
 
 
@@ -69,7 +69,7 @@ export default function SearchBar({ onModulesUpdate }: SearchBarProps) {
       .from(selectedSemester) // dynamically choose table based on semester
       .select("moduleCode, semesterData")
       .ilike("moduleCode", `%${query}%`)
-      .limit(10); // dont want too many results clogging the dropdown
+      .limit(10); 
 
     if (error) {
       console.error("Error fetching modules:", error.message);
@@ -268,7 +268,7 @@ export function SelectedModuleDisplay({
   if (Object.keys(modules).length === 0) {
     return null; // dont render anything if no modules selected
   }
-  //modules = getUniqueLessons(modules, "lessonType");
+  
 
   return (
     <div className="selected-modules-display">
@@ -286,7 +286,7 @@ export function SelectedModuleDisplay({
                 ×
               </button>
             )}
-            {/* u can access semesterData here for timetable rendering */}
+           
           </div>
         ))}
       </div>

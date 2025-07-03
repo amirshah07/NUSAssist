@@ -1,6 +1,4 @@
-/* TimetableComponent.css - Minimalistic design aligned with roadmap page */
 
-/* Base calendar container - matching navbar theme */
 .timetable-wrapper {
   background-color: #212121;
   border-radius: 12px;
@@ -12,21 +10,20 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Hide default toolbar completely */
+
 .rbc-toolbar {
   display: none !important;
 }
 
-/* Calendar base styles */
+
 .rbc-calendar {
   background-color: #212121 !important;
   color: #ffffff !important;
   border: none !important;
   height: 100% !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Header styles - matching navbar */
+
 .rbc-header {
   background-color: #2a2a2a !important;
   color: #FF6B00 !important;
@@ -43,7 +40,7 @@
   border-right: none !important;
 }
 
-/* Time gutter styling */
+
 .rbc-time-gutter {
   background-color: #2a2a2a !important;
   color: #cccccc !important;
@@ -61,7 +58,7 @@
   justify-content: center;
 }
 
-/* Time header adjustments */
+
 .rbc-time-header {
   border-bottom: 1px solid #404040 !important;
   background-color: #2a2a2a !important;
@@ -72,7 +69,7 @@
   border-right: 1px solid #404040 !important;
 }
 
-/* Time content area */
+
 .rbc-time-content {
   background-color: #212121 !important;
   border: none !important;
@@ -80,7 +77,7 @@
   overflow: hidden !important;
 }
 
-/* Time slots - 1 hour intervals */
+
 .rbc-time-slot {
   border-bottom: 1px solid #333333 !important;
   height: 60px !important;
@@ -93,7 +90,7 @@
   height: 60px !important;
 }
 
-/* Day columns */
+
 .rbc-day-bg {
   background-color: #212121 !important;
   border-right: 1px solid #333333 !important;
@@ -108,7 +105,6 @@
   border-right: none !important;
 }
 
-/* Current day highlighting - subtle orange glow */
 .rbc-today {
   background-color: rgba(255, 107, 0, 0.1) !important;
 }
@@ -118,7 +114,7 @@
   font-weight: 700 !important;
 }
 
-/* Event styling - beautiful module colors */
+
 .rbc-event {
   border: none !important;
   border-radius: 8px !important;
@@ -168,7 +164,7 @@
   outline-offset: 2px !important;
 }
 
-/* Custom event content */
+
 .custom-event {
   width: 100%;
   height: 100%;
@@ -224,7 +220,7 @@
   font-weight: 400;
 }
 
-/* Controls section - matching clean design */
+
 .timetable-controls {
   background: #2a2a2a;
   padding: 20px 24px;
@@ -271,7 +267,7 @@
   border-color: #94a3b8;
 }
 
-/* Info displays */
+
 .semester-info,
 .modules-info {
   color: #FF6B00;
@@ -293,7 +289,7 @@
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
-/* Alternative lesson controls */
+
 .alternatives-info {
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(126, 34, 206, 0.1) 100%);
   border: 1px solid rgba(147, 51, 234, 0.3);
@@ -329,7 +325,7 @@
   transform: translateY(-1px);
 }
 
-/* Alternative instructions */
+
 .alternatives-instructions {
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(126, 34, 206, 0.1) 100%);
   border: 1px solid rgba(147, 51, 234, 0.3);
@@ -351,7 +347,7 @@
   font-weight: 600;
 }
 
-/* No modules message */
+
 .no-modules-message {
   text-align: center;
   padding: 60px 20px;
@@ -364,7 +360,7 @@
   margin: 20px;
 }
 
-/* Alternative lesson highlighting */
+
 .rbc-event[style*="rgb(124, 58, 237)"] {
   background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
   animation: pulse-alternative 2s infinite;
@@ -380,7 +376,7 @@
   }
 }
 
-/* Calendar view adjustments */
+
 .rbc-time-view {
   height: 100% !important;
   overflow: hidden !important;
@@ -393,7 +389,7 @@
   overflow: hidden !important;
 }
 
-/* Remove scrollbars completely */
+
 .rbc-time-content::-webkit-scrollbar {
   display: none !important;
 }
@@ -403,17 +399,17 @@
   scrollbar-width: none !important;
 }
 
-/* Ensure proper time range display (8AM-9PM) */
+
 .rbc-calendar .rbc-time-view .rbc-time-content {
   height: calc(100% - 60px) !important;
 }
 
-/* Row backgrounds */
+
 .rbc-row-bg {
   display: none !important;
 }
 
-/* Responsive design */
+
 @media (max-width: 1024px) {
   .timetable-controls {
     padding: 16px 20px;
