@@ -1,0 +1,128 @@
+* {
+    box-sizing: border-box;
+}
+
+.dashboard-container {
+    height: calc(100vh - 95px); 
+    padding: min(25px, 2vh);
+    overflow: hidden;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 50fr) minmax(0, 11fr);
+    gap: min(25px, 2vw);
+    height: 100%;
+}
+
+.dashboard-schedule-section {
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: min(25px, 2vh);
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-stats-section {
+    display: grid;
+    grid-template-rows: 0.8fr 1.4fr 0.8fr;
+    gap: min(25px, 2vh);
+    height: 100%;
+}
+
+.dashboard-stats-section > * {
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: min(25px, 2vh);
+    overflow: hidden;
+    min-height: 0;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        height: auto;
+        min-height: calc(100vh - 95px);
+        padding: 16px;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 16px;
+    }
+    
+    .dashboard-schedule-section {
+        min-height: 50vh;
+        max-height: 70vh;
+    }
+    
+    .dashboard-stats-section {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .dashboard-stats-section > * {
+        min-height: 25vh;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 12px;
+    }
+    
+    .dashboard-grid {
+        gap: 12px;
+    }
+    
+    .dashboard-stats-section {
+        gap: 12px;
+    }
+    
+    .dashboard-schedule-section,
+    .dashboard-stats-section > * {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .dashboard-schedule-section {
+        min-height: 80vh;
+        max-height: 90vh;
+    }
+    
+    .dashboard-stats-section > * {
+        min-height: 40vh;
+    }
+}
+
+@media (max-height: 600px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+    
+    .dashboard-stats-section {
+        gap: 10px;
+    }
+    
+    .dashboard-grid {
+        gap: 10px;
+    }
+    
+    .dashboard-schedule-section,
+    .dashboard-stats-section > * {
+        padding: 15px;
+    }
+}

@@ -1,0 +1,100 @@
+.progress-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.progress-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: clamp(14px, 2vh, 16px);
+    font-weight: 600;
+    color: #FF6B00;
+    margin: 0 0 min(15px, 1.5vh) 0;
+}
+
+.progress-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.progress-mc-section {
+    display: flex;
+    flex-direction: column;
+    gap: min(6px, 0.6vh);
+}
+
+.progress-mc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-mc-label {
+    font-size: clamp(11px, 1.6vh, 12px);
+    color: #9ca3af;
+}
+
+.progress-mc-value {
+    font-size: clamp(12px, 1.8vh, 13px);
+    font-weight: 600;
+    color: #f0f0f0;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: min(6px, 0.8vh);
+    background: #1f1f1f;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #FF6B00;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progress-year-info {
+    font-size: clamp(11px, 1.6vh, 12px);
+    color: #9ca3af;
+    margin-top: min(8px, 0.8vh);
+}
+
+@media (max-height: 600px) {
+    .progress-card-title {
+        margin-bottom: min(10px, 1vh);
+    }
+    
+    .progress-bar-container {
+        height: min(5px, 0.6vh);
+    }
+}
+
+@media (max-width: 768px) {
+    .progress-card-title {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .progress-mc-label {
+        font-size: 12px;
+    }
+    
+    .progress-mc-value {
+        font-size: 13px;
+    }
+    
+    .progress-bar-container {
+        height: 8px;
+    }
+    
+    .progress-year-info {
+        font-size: 12px;
+        margin-top: 10px;
+    }
+}
