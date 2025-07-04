@@ -10,6 +10,7 @@ import Register from './pages/Login and Register/Register';
 import ResetPassword from './pages/Login and Register/ResetPassword'; 
 import Loading from './components/Loading/Loading';
 import PageNotFound from './pages/PageNotFound/PageNotFound';
+import { Analytics } from "@vercel/analytics/react"
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -143,6 +144,7 @@ function App() {
         {/* 404 Page */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }
