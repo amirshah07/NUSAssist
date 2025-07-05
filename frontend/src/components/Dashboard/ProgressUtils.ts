@@ -6,9 +6,7 @@ interface SemesterInfo {
   semesterType: string; // '1', '2', 'ST1', 'ST2'
 }
 
-/**
- * Parse semester ID to extract year and semester info
- */
+// Parse semester ID to extract year and semester info
 function parseSemesterId(semesterId: string): SemesterInfo | null {
   const match = semesterId.match(/Y(\d)S(\w+)/);
   if (!match) return null;
@@ -19,9 +17,7 @@ function parseSemesterId(semesterId: string): SemesterInfo | null {
   };
 }
 
-/**
- * Find the latest semester from the semesters array
- */
+// Find the latest semester from the semesters array
 function findLatestSemester(semesters: Semester[]): SemesterInfo | null {
   if (semesters.length === 0) return null;
   
@@ -63,9 +59,7 @@ function findLatestSemester(semesters: Semester[]): SemesterInfo | null {
   return latest;
 }
 
-/**
- * Calculate the next semester based on progression rules
- */
+// Calculate the next semester based on progression rules
 export function getNextSemester(semesters: Semester[]): string {
   const totalMCs = calculateTotalMCs(semesters);
   
@@ -103,9 +97,7 @@ export function getNextSemester(semesters: Semester[]): string {
   return `Year ${nextYear} Semester ${nextSemesterType}`;
 }
 
-/**
- * Calculate progress percentage (capped at 100%)
- */
+// Calculate progress percentage (capped at 100%)
 export function getProgressPercentage(totalMCs: number): number {
   const percentage = (totalMCs / 160) * 100;
   return Math.min(percentage, 100);
