@@ -1,4 +1,5 @@
 import { TrendingUp } from 'lucide-react';
+import { getCurrentSemesterInfo } from './AcademicCalendar';
 import './SemesterCard.css';
 
 interface Module {
@@ -16,11 +17,13 @@ export default function SemesterCard() {
         { code: 'CFG1002', color: '#ef4444' }
     ];
     
-    const totalModules = currentModules.length;
-    const totalMCs = 20;
-    const currentWeek = 7;    
-    const listClassName = totalModules > 5 ? 'semester-modules-list two-columns' : 'semester-modules-list';
+    const totalModules = currentModules.length; // This data will come from backend, dummy data for now
+    const totalMCs = 20;  // This data will come from backend, dummy data for now
 
+
+    const listClassName = totalModules > 5 ? 'semester-modules-list two-columns' : 'semester-modules-list'; 
+    const semesterInfo = getCurrentSemesterInfo();
+    const weekDisplay = semesterInfo.displayWeek;
     return (
         <div className="semester-card">
             <h3 className="semester-card-title">
@@ -30,7 +33,8 @@ export default function SemesterCard() {
             
             <div className="semester-card-content">
                 <div className="semester-summary">
-                    {totalModules} modules | {totalMCs} MCs | Week {currentWeek}
+                    {/* week not rendered on holiday */}
+                    {totalModules} modules | {totalMCs} MCs {weekDisplay && ` | ${weekDisplay}`} 
                 </div>
                 
                 <ul className={listClassName}>
