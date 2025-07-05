@@ -39,7 +39,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Loading />;
   }
 
-  // Wrap authenticated content with SemestersProvider
   return isAuthenticated ? (
     <SemestersProvider>{children}</SemestersProvider>
   ) : (
