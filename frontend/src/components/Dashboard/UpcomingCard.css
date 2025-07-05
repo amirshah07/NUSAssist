@@ -51,6 +51,7 @@
     font-weight: 600;
 }
 
+
 @media (max-height: 600px) {
     .upcoming-event {
         padding: min(4px, 0.4vh) 0;
