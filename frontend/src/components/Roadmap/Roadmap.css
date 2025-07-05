@@ -4,7 +4,7 @@
   height: calc(100vh - 6px);
   margin-top: 6px;
   overflow: hidden;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 132px);
 }
 
 .react-flow__node {
