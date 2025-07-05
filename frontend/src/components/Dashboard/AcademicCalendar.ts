@@ -101,7 +101,7 @@ export function getCurrentSemesterInfo(date: Date = new Date()): CurrentSemester
       if (date >= weekInfo.start && date <= weekInfo.end) {
         if (weekInfo.type === 'recess') return { semester: 1, week: 'recess', displayWeek: 'Recess Week' };
         if (weekInfo.type === 'reading') return { semester: 1, week: 'reading', displayWeek: 'Reading Week' };
-        if (weekInfo.type === 'exam') return { semester: 1, week: 'exam', displayWeek: 'Examination Period' };
+        if (weekInfo.type === 'exam') return { semester: 1, week: 'exam', displayWeek: 'Exam Period' };
         return { semester: 1, week: key, displayWeek: `Week ${key}` };
       }
     }
@@ -113,7 +113,7 @@ export function getCurrentSemesterInfo(date: Date = new Date()): CurrentSemester
       if (date >= weekInfo.start && date <= weekInfo.end) {
         if (weekInfo.type === 'recess') return { semester: 2, week: 'recess', displayWeek: 'Recess Week' };
         if (weekInfo.type === 'reading') return { semester: 2, week: 'reading', displayWeek: 'Reading Week' };
-        if (weekInfo.type === 'exam') return { semester: 2, week: 'exam', displayWeek: 'Examination Period' };
+        if (weekInfo.type === 'exam') return { semester: 2, week: 'exam', displayWeek: 'Exam Period' };
         return { semester: 2, week: key, displayWeek: `Week ${key}` };
       }
     }
