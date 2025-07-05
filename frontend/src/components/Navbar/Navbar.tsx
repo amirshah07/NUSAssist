@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
-import ConfirmModal from "../Roadmap/ConfirmModal"
+import ConfirmModal from "../ConfirmModal/ConfirmModal"
 import "./Navbar.css"
 
 export default function Navbar() {

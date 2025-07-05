@@ -21,7 +21,7 @@ import '@xyflow/react/dist/style.css';
 import './Roadmap.css'; 
 import { ZoomIn, ZoomOut } from "lucide-react";
 import CustomNode from './CustomNode';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import NodeInfoModal from './NodeInfoModal';
 import MajorDropdown from './MajorDropdown';
 import AddRemoveModuleModal from './AddRemoveModuleModal';
