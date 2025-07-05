@@ -6,6 +6,7 @@
     height: calc(100vh - 95px); 
     padding: min(25px, 2vh);
     overflow: hidden;
+    
 }
 
 .dashboard-grid {
@@ -17,7 +18,7 @@
 
 .dashboard-schedule-section {
     background: #2a2a2a;
-    border: 1px solid #404040;
+    border: 2px solid #404040;
     border-radius: 8px;
     padding: min(25px, 2vh);
     height: 100%;
