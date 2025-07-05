@@ -109,7 +109,7 @@ function App() {
           } 
         />
         <Route 
-          path="/gpacalculator" 
+          path="/academics" 
           element={
             <ProtectedRoute>
               <GpaPage />
