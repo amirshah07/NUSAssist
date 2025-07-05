@@ -3,7 +3,7 @@
 }
 
 .dashboard-container {
-    height: calc(100vh - 126px); 
+    height: calc(100vh - 122px); 
     padding: min(25px, 2vh);
     overflow: hidden;
     
