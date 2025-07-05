@@ -1,0 +1,80 @@
+.alert-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.alert-modal-content {
+  background: #2a2a2a;
+  color: #fff;
+  border-radius: 16px;
+  border: 2px solid #404040;
+  max-width: 360px;
+  width: 90%;
+  padding: 1.75rem;
+  text-align: center;
+  animation: alertModalSlideIn 0.2s ease-out;
+}
+
+@keyframes alertModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.alert-modal-icon {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.alert-modal-message {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #d0d0d0;
+}
+
+.alert-modal-button {
+  padding: 0.6rem 2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  background: #FF6B00;
+  color: #fff;
+  min-width: 100px;
+}
+
+.alert-modal-button:hover {
+  background: #e55a00;
+}
+
+.alert-modal-button:active {
+  background: #cc5200;
+}
+
+.alert-modal-button:focus-visible {
+  outline: 2px solid rgba(255, 107, 0, 0.5);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .alert-modal-content {
+    padding: 1.5rem;
+  }
+}

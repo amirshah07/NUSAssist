@@ -1,10 +1,11 @@
-// Interfaces
 export interface Module {
   code: string;
   name: string;
   mcs: number;
   grade: string;
   gradePoint: number;
+  suUsed?: boolean;
+  showActualGrade?: boolean;
 }
 
 export interface Semester {
@@ -13,13 +14,7 @@ export interface Semester {
   modules: Module[];
 }
 
-export interface GradeOption {
-  grade: string;
-  point: number;
-}
-
-// Grade options constant
-export const gradeOptions: GradeOption[] = [
+export const gradeOptions = [
   { grade: 'A+', point: 5.0 },
   { grade: 'A', point: 5.0 },
   { grade: 'A-', point: 4.5 },
@@ -30,127 +25,167 @@ export const gradeOptions: GradeOption[] = [
   { grade: 'C', point: 2.0 },
   { grade: 'D+', point: 1.5 },
   { grade: 'D', point: 1.0 },
-  { grade: 'F', point: 0 },
-  { grade: 'S', point: 0 },
-  { grade: 'U', point: 0 },
+  { grade: 'F', point: 0.0 },
   { grade: 'CS', point: 0 },
   { grade: 'CU', point: 0 }
 ];
 
-// Calculate overall CAP from all semesters
-export const calculateCAP = (semesters: Semester[]): string => {
+// Get grade point from grade letter
+export function getGradePoint(grade: string): number {
+  const gradeOption = gradeOptions.find(opt => opt.grade === grade);
+  return gradeOption ? gradeOption.point : 0;
+}
+
+// Calculate CAP for all semesters
+export function calculateCAP(semesters: Semester[]): string {
   let totalGradePoints = 0;
   let totalGradedMCs = 0;
 
-  semesters.forEach(sem => {
-    sem.modules.forEach(mod => {
-      if (mod.grade !== 'CS' && mod.grade !== 'CU' && mod.grade !== 'S' && mod.grade !== 'U') {
-        totalGradePoints += mod.gradePoint * mod.mcs;
-        totalGradedMCs += mod.mcs;
+  semesters.forEach(semester => {
+    semester.modules.forEach(module => {
+      // Only count graded modules (not CS/CU or S/U used)
+      if (!['CS', 'CU'].includes(module.grade) && !module.suUsed) {
+        totalGradePoints += module.gradePoint * module.mcs;
+        totalGradedMCs += module.mcs;
       }
     });
   });
 
-  return totalGradedMCs > 0 ? (totalGradePoints / totalGradedMCs).toFixed(2) : '0.00';
-};
+  if (totalGradedMCs === 0) return '0.00';
+  return (totalGradePoints / totalGradedMCs).toFixed(2);
+}
 
-// Calculate total MCs across all semesters
-export const calculateTotalMCs = (semesters: Semester[]): number => {
-  let total = 0;
-  semesters.forEach(sem => {
-    sem.modules.forEach(mod => {
-      total += mod.mcs;
-    });
-  });
-  return total;
-};
-
-// Calculate graded MCs (excluding S/U/CS/CU grades)
-export const calculateGradedMCs = (semesters: Semester[]): number => {
-  let total = 0;
-  semesters.forEach(sem => {
-    sem.modules.forEach(mod => {
-      if (mod.grade !== 'CS' && mod.grade !== 'CU' && mod.grade !== 'S' && mod.grade !== 'U') {
-        total += mod.mcs;
-      }
-    });
-  });
-  return total;
-};
-
-// Calculate CAP for a specific semester
-export const calculateSemesterCAP = (modules: Module[]): string => {
+// Calculate CAP for a single semester
+export function calculateSemesterCAP(modules: Module[]): string {
   let totalGradePoints = 0;
   let totalGradedMCs = 0;
 
-  modules.forEach(mod => {
-    if (mod.grade !== 'CS' && mod.grade !== 'CU' && mod.grade !== 'S' && mod.grade !== 'U') {
-      totalGradePoints += mod.gradePoint * mod.mcs;
-      totalGradedMCs += mod.mcs;
+  modules.forEach(module => {
+    if (!['CS', 'CU'].includes(module.grade) && !module.suUsed) {
+      totalGradePoints += module.gradePoint * module.mcs;
+      totalGradedMCs += module.mcs;
     }
   });
 
-  return totalGradedMCs > 0 ? (totalGradePoints / totalGradedMCs).toFixed(2) : '0.00';
-};
+  if (totalGradedMCs === 0) return '0.00';
+  return (totalGradePoints / totalGradedMCs).toFixed(2);
+}
 
-// Calculate projected CAP including planning modules
-export const calculateProjectedCAP = (
-  semesters: Semester[], 
-  planningModules: Partial<Module>[]
-): string => {
-  let currentGradePoints = 0;
-  let currentGradedMCs = 0;
+// Calculate total MCs (all modules including CS/CU/S/U)
+export function calculateTotalMCs(semesters: Semester[]): number {
+  return semesters.reduce((total, semester) => 
+    total + semester.modules.reduce((semTotal, module) => semTotal + module.mcs, 0), 
+    0
+  );
+}
 
-  // Add existing grades
-  semesters.forEach(sem => {
-    sem.modules.forEach(mod => {
-      if (mod.grade !== 'CS' && mod.grade !== 'CU' && mod.grade !== 'S' && mod.grade !== 'U') {
-        currentGradePoints += mod.gradePoint * mod.mcs;
-        currentGradedMCs += mod.mcs;
+// Calculate graded MCs (excluding CS/CU and S/U used modules)
+export function calculateGradedMCs(semesters: Semester[]): number {
+  return semesters.reduce((total, semester) => 
+    total + semester.modules.reduce((semTotal, module) => 
+      !['CS', 'CU'].includes(module.grade) && !module.suUsed ? semTotal + module.mcs : semTotal, 
+      0
+    ), 
+    0
+  );
+}
+
+// Calculate projected CAP with planning modules
+export function calculateProjectedCAP(semesters: Semester[], planningModules: Partial<Module>[]): string {
+  let totalGradePoints = 0;
+  let totalGradedMCs = 0;
+
+  // Add existing graded modules
+  semesters.forEach(semester => {
+    semester.modules.forEach(module => {
+      if (!['CS', 'CU'].includes(module.grade) && !module.suUsed) {
+        totalGradePoints += module.gradePoint * module.mcs;
+        totalGradedMCs += module.mcs;
       }
     });
   });
 
   // Add planning modules
-  planningModules.forEach(mod => {
-    if (mod.code && mod.grade !== 'CS' && mod.grade !== 'CU' && mod.grade !== 'S' && mod.grade !== 'U' && mod.gradePoint) {
-      const mcs = mod.mcs || 4; // Default to 4 MCs if not specified
-      currentGradePoints += mod.gradePoint * mcs;
-      currentGradedMCs += mcs;
+  planningModules.forEach(module => {
+    if (module.code && module.grade && module.gradePoint !== undefined && module.mcs) {
+      if (!['CS', 'CU'].includes(module.grade) && !module.suUsed) {
+        totalGradePoints += module.gradePoint * module.mcs;
+        totalGradedMCs += module.mcs;
+      }
     }
   });
 
-  return currentGradedMCs > 0 ? (currentGradePoints / currentGradedMCs).toFixed(2) : '0.00';
-};
+  if (totalGradedMCs === 0) return '0.00';
+  return (totalGradePoints / totalGradedMCs).toFixed(3);
+}
 
-export const getGradeColor = (grade: string): string => {
-  if (grade === 'A+' || grade === 'A') return 'grade-excellent';
-  if (grade === 'A-' || grade === 'B+') return 'grade-good';
-  if (grade === 'B' || grade === 'B-') return 'grade-average';
-  if (grade === 'CS' || grade === 'CU' || grade === 'S' || grade === 'U') return 'grade-su';
-  return 'grade-poor';
-};
+// Get display grade (handles S/U toggle)
+export function getDisplayGrade(module: Module): string {
+  if (module.suUsed && !module.showActualGrade) {
+    // Show S for passing grades, U for F
+    return module.grade === 'F' ? 'U' : 'S';
+  }
+  return module.grade;
+}
 
-// Get grade point from grade
-export const getGradePoint = (grade: string): number => {
-  const gradeInfo = gradeOptions.find(g => g.grade === grade);
-  return gradeInfo ? gradeInfo.point : 0;
-};
+// Get colour class based on grade
+export function getGradeColor(grade: string): string {
+  switch (grade) {
+    case 'A+':
+    case 'A':
+    case 'A-':
+      return 'grade-excellent';
+    case 'B+':
+    case 'B':
+      return 'grade-good';
+    case 'B-':
+    case 'C+':
+    case 'C':
+      return 'grade-average';
+    case 'D+':
+    case 'D':
+      return 'grade-poor';
+    case 'F':
+      return 'grade-poor';
+    case 'CS':
+    case 'CU':
+    case 'S':
+    case 'U':
+      return 'grade-su';
+    default:
+      return '';
+  }
+}
 
-// Sort semesters chronologically
 export const sortSemesters = (semesters: Semester[]): Semester[] => {
   return [...semesters].sort((a, b) => {
-    // Extract year and semester from ID (e.g., "Y1S2")
-    const aYear = parseInt(a.id.match(/Y(\d)/)?.[1] || '0');
-    const bYear = parseInt(b.id.match(/Y(\d)/)?.[1] || '0');
+    // Extract year and semester from IDs like "Y1S1", "Y2ST1"
+    const aMatch = a.id.match(/Y(\d)S(\w+)/);
+    const bMatch = b.id.match(/Y(\d)S(\w+)/);
     
-    if (aYear !== bYear) return aYear - bYear;
+    if (!aMatch || !bMatch) return 0;
     
-    // Order: Semester 1, Semester 2, Special Term 1, Special Term 2
-    const semOrder: { [key: string]: number } = { '1': 1, '2': 2, 'ST1': 3, 'ST2': 4 };
-    const aSem = a.id.match(/S(\w+)/)?.[1] || '1';
-    const bSem = b.id.match(/S(\w+)/)?.[1] || '1';
+    const aYear = parseInt(aMatch[1]);
+    const bYear = parseInt(bMatch[1]);
+    
+    // First sort by year
+    if (aYear !== bYear) {
+      return aYear - bYear;
+    }
+    
+    // Then sort by semester within the same year
+    const aSem = aMatch[2];
+    const bSem = bMatch[2];
+    
+    // Define semester order: 1, 2, ST1, ST2
+    const semOrder: { [key: string]: number } = {
+      '1': 1,
+      '2': 2,
+      'ST1': 3,
+      'ST2': 4
+    };
     
     return (semOrder[aSem] || 0) - (semOrder[bSem] || 0);
   });
 };
+
