@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabaseClient'; 
+import { SemestersProvider } from './contexts/SemestersContext';
 import Homepage from './pages/Homepage/Homepage';
 import RoadmapPage from './pages/RoadmapPage/RoadmapPage';
 import TimetablePage from './pages/TimetablePage/TimetablePage';
@@ -38,7 +39,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Loading />;
   }
 
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  // Wrap authenticated content with SemestersProvider
+  return isAuthenticated ? (
+    <SemestersProvider>{children}</SemestersProvider>
+  ) : (
+    <Navigate to="/login" replace />
+  );
 };
 
 // Public Route Component (for login/register)
