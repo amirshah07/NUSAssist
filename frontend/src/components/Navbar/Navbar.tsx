@@ -94,18 +94,18 @@ export default function Navbar() {
             </div>
             
             <div className="navbar-center desktop-menu">
-                <Link to="/timetable">My Timetable</Link>
-                <Link to="/gpacalculator">GPA Calculator</Link>
-                <Link to="/roadmap">University Roadmap</Link>
+                <Link to="/timetable">Timetable</Link>
+                <Link to="/academics">Academics</Link>
+                <Link to="/roadmap">Roadmap</Link>
             </div>
 
             <div 
                 id="mobile-menu" 
                 className={`mobile-menu ${menuOpen ? 'open' : ''} ${isMobile ? 'full-width' : 'popup'}`}
             >
-                <Link to="/timetable" onClick={handleLinkClick}>My Timetable</Link>
-                <Link to="/gpacalculator" onClick={handleLinkClick}>GPA Calculator</Link>
-                <Link to="/roadmap" onClick={handleLinkClick}>University Roadmap</Link>
+                <Link to="/timetable" onClick={handleLinkClick}>Timetable</Link>
+                <Link to="/academics" onClick={handleLinkClick}>Academics</Link>
+                <Link to="/roadmap" onClick={handleLinkClick}>Roadmap</Link>
             </div>
 
             <div className="navbar-right">
