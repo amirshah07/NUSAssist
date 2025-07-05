@@ -66,6 +66,28 @@
     margin-top: min(8px, 0.8vh);
 }
 
+.progress-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0;
+}
+
+.loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #404040;
+    border-top-color: #FF6B00;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 @media (max-height: 600px) {
     .progress-card-title {
         margin-bottom: min(10px, 1vh);
