@@ -140,7 +140,7 @@ function App() {
           } 
         />
 
-        {/* Reset Password Route - only accessible with valid reset link */}
+        {/* Reset Password Route - accessible to anyone */}
         <Route 
           path="/resetpassword" 
           element={<ResetPassword />}
