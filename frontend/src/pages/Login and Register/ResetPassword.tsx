@@ -18,28 +18,31 @@ export default function ResetPassword() {
     const [isValidating, setIsValidating] = useState(true);
     const [showPasswordUpdateSuccess, setShowPasswordUpdateSuccess] = useState(false);
     const [userEmail, setUserEmail] = useState("");
+    const [isValidSession, setIsValidSession] = useState(false);
 
     useEffect(() => {
         const checkAuthAndTokens = async () => {
+            // Store the original hash before anything clears it
+            const originalHash = window.location.hash;
+            
             // Extract tokens from URL hash
-            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const hashParams = new URLSearchParams(originalHash.substring(1));
             const accessToken = hashParams.get('access_token');
             const refreshToken = hashParams.get('refresh_token');
             const type = hashParams.get('type');
 
             // Check if this is a valid reset password flow
             if (type === 'recovery' && accessToken && refreshToken) {
-                // Small delay for UI stability
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
                 try {
+                    // Set the session
                     const { error } = await supabase.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken
                     });
                     
                     if (error) {
-                        await supabase.auth.signOut();
+                        console.error('Session error:', error);
+                        setIsValidating(false);
                         navigate('/login');
                         return;
                     }
@@ -48,6 +51,7 @@ export default function ResetPassword() {
                     const { data: { user }, error: userError } = await supabase.auth.getUser();
                     if (!userError && user?.email) {
                         setUserEmail(user.email);
+                        setIsValidSession(true); // Mark session as valid for password reset
                     }
                     
                     // Clear the URL hash
@@ -55,23 +59,26 @@ export default function ResetPassword() {
                         window.history.replaceState(null, '', window.location.pathname);
                     }
                     
-                    // Focus this tab
-                    if (window.focus) {
-                        window.focus();
-                    }
-                    
                     setIsValidating(false);
                     return;
                 } catch (error) {
-                    await supabase.auth.signOut();
+                    console.error('Error setting session:', error);
+                    setIsValidating(false);
                     navigate('/login');
                     return;
                 }
             }
 
-            // No valid recovery tokens found
-            await supabase.auth.signOut();
-            navigate('/login');
+            // If no recovery tokens, check if user is in a valid reset session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                setIsValidating(false);
+                navigate('/login');
+                return;
+            }
+
+            // Check if this is a recent recovery session (optional - you can add time checks here)
+            setIsValidating(false);
         };
 
         checkAuthAndTokens();
@@ -160,6 +167,12 @@ export default function ResetPassword() {
                 <Loading />
             </main>
         );
+    }
+
+    // If we don't have a valid session after validation, they shouldn't be here
+    if (!isValidSession && !userEmail) {
+        navigate('/login');
+        return null;
     }
 
     return (
