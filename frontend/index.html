@@ -5,6 +5,9 @@
     <link rel="icon" type="image/png" href="/orange-graduation-cap.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NUSAssist</title>
+    <script>
+      if(location.hash.includes('type=recovery')) location.href='/resetpassword'+location.hash;
+    </script>
   </head>
   <body>
     <div id="root"></div>
