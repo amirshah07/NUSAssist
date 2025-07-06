@@ -120,6 +120,7 @@ main form {
   cursor: pointer !important;
   transition: color 0.3s ease !important;
   padding: 0 !important;
+  margin-top: 5px;
   white-space: nowrap;
   flex-shrink: 0;
   position: relative;
