@@ -94,16 +94,19 @@ main form {
 .error-forgot-container {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
-  min-height: 30px;
+  height: 30px;
   margin-top: -10px;
+  position: relative;
 }
 
 /* Error Message Wrapper */
 .error-message-wrapper {
   flex: 1;
-  min-height: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
 }
 
 /* Forgot Password Link Button */
@@ -119,6 +122,8 @@ main form {
   padding: 0 !important;
   white-space: nowrap;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .forgot-password-link:hover {
@@ -143,31 +148,6 @@ main form {
 
 .back-to-login-btn:hover {
   background-color: #555 !important;
-}
-
-main form h2 {
-  margin: 8px 0;
-  font-weight: 650;
-  color: #fff;
-}
-
-.google-logo {
-  width: 60%;
-  max-width: 230px;
-  cursor: pointer;
-  display: block;
-  margin: 1rem 0;
-}
-
-.google-login-container {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
-}
-
-.navbar-right img:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(255, 107, 0, 1); 
 }
 
 main form p {
@@ -196,17 +176,27 @@ main form p a:hover {
 
 /* Error message in login form (inline with forgot password) */
 .error-message {
-  color: #ff3333;
-  font-size: 0.9rem;
+  color: #ff3333 !important;
+  font-size: 0.9rem !important;
   text-align: left;
   width: 100%;
-  animation: fadeIn 0.3s ease-in;
+  line-height: 1;
 }
 
-/* Error message in forgot password form (standalone) */
+/* Error message specific to the error-forgot-container */
+.error-forgot-container .error-message {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Error message in forgot password form and register form (standalone) */
 .input-container > .error-message {
   margin-top: -10px;
   margin-bottom: 5px;
+  position: static !important;
+  transform: none !important;
 }
 
 @keyframes fadeIn {
@@ -218,20 +208,6 @@ main form p a:hover {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Success message for forgot password */
-.success-message {
-  color: #4CAF50;
-  font-size: 0.9rem;
-  margin-top: -10px;
-  margin-bottom: 5px;
-  text-align: left;
-  width: 100%;
-  background-color: rgba(76, 175, 80, 0.1);
-  padding: 10px;
-  border-radius: 4px;
-  border-left: 4px solid #4CAF50;
 }
 
 .password-input-container {
@@ -302,12 +278,19 @@ main form p a:hover {
   
   /* Stack error and forgot password on mobile */
   .error-forgot-container {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
     gap: 10px;
+    height: auto;
+    min-height: 30px;
+  }
+  
+  .error-forgot-container .error-message {
+    position: static;
+    transform: none;
   }
   
   .forgot-password-link {
-    align-self: flex-end;
+    align-self: center;
   }
 }
