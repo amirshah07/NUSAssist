@@ -647,7 +647,7 @@ const Roadmap = () => {
           nodeTypes={nodeTypes}
           connectionLineType={ConnectionLineType.SmoothStep}
           fitView
-          minZoom={0.4} 
+          minZoom={0.3} 
           maxZoom={1.2} 
           style={{ backgroundColor: '#242424' }}
           proOptions={{ hideAttribution: true }}
