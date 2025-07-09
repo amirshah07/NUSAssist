@@ -182,76 +182,120 @@ const Roadmap = () => {
       .map(edge => edge.source);
   }, [edges]);
 
-  const determineNodeStatus = useCallback((nodeId: string, currentNodes: Node[], edgeList?: Edge[]): ModuleStatus => {
-    const prerequisites = getPrerequisites(nodeId, edgeList);
-    
-    // If no prerequisites, node is available
-    if (prerequisites.length === 0) {
-      return 'available';
-    }
-
-    // Check if all prerequisites are completed
-    const allPrerequisitesCompleted = prerequisites.every(prereqId => {
-      const prereqNode = currentNodes.find(node => node.id === prereqId);
-      return prereqNode && (prereqNode.data as ModuleNodeData).status === 'completed';
-    });
-
-    return allPrerequisitesCompleted ? 'available' : 'locked';
-  }, [getPrerequisites]);
-
   const updateNodeStatuses = useCallback((updatedNodes: Node[], edgeList?: Edge[]) => {
+    // Create a map for quick node lookup
+    const nodeMap = new Map<string, Node>();
+    updatedNodes.forEach(node => nodeMap.set(node.id, node));
+    
+    // Helper function to check if all prerequisites are completed
+    const arePrerequisitesCompleted = (nodeId: string): boolean => {
+      const prerequisites = getPrerequisites(nodeId, edgeList);
+      return prerequisites.every(prereqId => {
+        const prereqNode = nodeMap.get(prereqId);
+        return prereqNode && (prereqNode.data as ModuleNodeData).status === 'completed';
+      });
+    };
+    
+    // Helper function to cascade status updates
+    const cascadeStatusUpdate = (nodeId: string, visited: Set<string> = new Set()) => {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      
+      // Find all nodes that depend on this node
+      const dependents = (edgeList || edges).filter(edge => edge.source === nodeId).map(edge => edge.target);
+      
+      dependents.forEach(dependentId => {
+        const dependentNode = nodeMap.get(dependentId);
+        if (dependentNode) {
+          const nodeData = dependentNode.data as ModuleNodeData;
+          
+          // If this dependent was completed or available, check if it should still be
+          if (nodeData.status === 'completed' || nodeData.status === 'available') {
+            if (!arePrerequisitesCompleted(dependentId)) {
+              // Update the node in the map
+              nodeMap.set(dependentId, {
+                ...dependentNode,
+                data: {
+                  ...nodeData,
+                  status: 'locked'
+                }
+              });
+              
+              // Cascade to this node's dependents
+              cascadeStatusUpdate(dependentId, visited);
+            }
+          }
+        }
+      });
+    };
+    
+    // First pass: Update all nodes based on their prerequisites
     const newNodes = updatedNodes.map(node => {
       const nodeData = node.data as ModuleNodeData;
       
-      // Check if completed nodes still have their prerequisites satisfied
+      // For completed nodes, check if they should remain completed
       if (nodeData.status === 'completed') {
-        const prerequisites = getPrerequisites(node.id, edgeList);
-        
-        // If node has prerequisites, check if they're all still completed
-        if (prerequisites.length > 0) {
-          const allPrerequisitesCompleted = prerequisites.every(prereqId => {
-            const prereqNode = updatedNodes.find(n => n.id === prereqId);
-            return prereqNode && (prereqNode.data as ModuleNodeData).status === 'completed';
-          });
-          
-          // If prerequisites are no longer satisfied, revert to locked
-          if (!allPrerequisitesCompleted) {
-            return {
-              ...node,
-              targetPosition: node.targetPosition || Position.Top,
-              sourcePosition: node.sourcePosition || Position.Bottom,
-              data: {
-                ...nodeData,
-                status: 'locked'
-              }
-            } as Node;
-          }
+        if (!arePrerequisitesCompleted(node.id)) {
+          const updatedNode = {
+            ...node,
+            targetPosition: node.targetPosition || Position.Top,
+            sourcePosition: node.sourcePosition || Position.Bottom,
+            data: {
+              ...nodeData,
+              status: 'locked' as ModuleStatus
+            }
+          };
+          nodeMap.set(node.id, updatedNode);
+          return updatedNode;
         }
-        
-        // Keep as completed if prerequisites are still satisfied (or no prerequisites)
-        return {
-          ...node,
-          targetPosition: node.targetPosition || Position.Top,
-          sourcePosition: node.sourcePosition || Position.Bottom
-        } as Node;
+      } else {
+        // For non-completed nodes, determine status
+        const newStatus = arePrerequisitesCompleted(node.id) ? 'available' : 'locked';
+        if (newStatus !== nodeData.status) {
+          const updatedNode = {
+            ...node,
+            targetPosition: node.targetPosition || Position.Top,
+            sourcePosition: node.sourcePosition || Position.Bottom,
+            data: {
+              ...nodeData,
+              status: newStatus
+            }
+          };
+          nodeMap.set(node.id, updatedNode);
+          return updatedNode;
+        }
       }
-
-      // For non-completed nodes, determine status normally
-      const newStatus = determineNodeStatus(node.id, updatedNodes, edgeList);
+      
+      // No change needed
+      nodeMap.set(node.id, {
+        ...node,
+        targetPosition: node.targetPosition || Position.Top,
+        sourcePosition: node.sourcePosition || Position.Bottom
+      });
       
       return {
         ...node,
         targetPosition: node.targetPosition || Position.Top,
-        sourcePosition: node.sourcePosition || Position.Bottom,
-        data: {
-          ...nodeData,
-          status: newStatus
-        }
-      } as Node;
+        sourcePosition: node.sourcePosition || Position.Bottom
+      };
     });
     
-    return newNodes;
-  }, [determineNodeStatus, getPrerequisites]);
+    // Second pass: Cascade status updates for any nodes that became locked
+    updatedNodes.forEach((node, index) => {
+      const originalData = node.data as ModuleNodeData;
+      const newNode = newNodes[index];
+      const newData = newNode.data as ModuleNodeData;
+      
+      // If a node changed from completed/available to locked, cascade the update
+      if ((originalData.status === 'completed' || originalData.status === 'available') && 
+          newData.status === 'locked') {
+        cascadeStatusUpdate(node.id);
+      }
+    });
+    
+    // Convert the map back to an array
+    return Array.from(nodeMap.values());
+  }, [getPrerequisites, edges]);
 
   const handleMajorSelect = useCallback((major: string) => {
     setPendingMajor(major);
