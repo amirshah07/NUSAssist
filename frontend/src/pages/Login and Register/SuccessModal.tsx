@@ -18,7 +18,7 @@ const SuccessModal = ({ type, email, onButtonClick }: SuccessModalProps) => {
         return {
           title: 'Account Created!',
           mainText: 'We\'ve sent a verification link to:',
-          instructionText: 'Check your email and click the link to activate your account.',
+          instructionText: 'Check your email and click the link to activate your account. It may take a few minutes to arrive.',
           buttonText: 'Continue to Login',
           showEmail: true,
         };
@@ -26,7 +26,7 @@ const SuccessModal = ({ type, email, onButtonClick }: SuccessModalProps) => {
         return {
           title: 'Reset Email Sent!',
           mainText: 'We\'ve sent password reset instructions to:',
-          instructionText: 'Check your email and follow the link to reset your password.',
+          instructionText: 'Check your email and follow the link to reset your password. It may take a few minutes to arrive.',
           buttonText: 'Back to Login',
           showEmail: true,
         };
