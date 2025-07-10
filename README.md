@@ -1,4 +1,4 @@
-# <img src="frontend/public/orange-graduation-cap.png" width="30" height="30" style="position: relative; top: 3px; margin-right: 4px;"> NUSAssist
+# <img src="frontend/public/orange-graduation-cap.png" width="30" height="30" style="position: relative; top: 4px; margin-right: 4px;"> NUSAssist
 Welcome to NUSAssist, a comprehensive academic planning and tracking tool designed for NUS students to manage their university journey effectively.
 
 🌐 **Live at: [nusassist.com](https://nusassist.com)**
