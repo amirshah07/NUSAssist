@@ -64,7 +64,6 @@ export default function SemesterCard() {
 
                 // Transform to Module[] format and calculate MCs
                 const modules: Module[] = [];
-                let totalCredits = 0;
 
                 Object.entries(timetableData.modules).forEach(([moduleCode]) => {
                     modules.push({
