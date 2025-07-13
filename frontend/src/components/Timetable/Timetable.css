@@ -1,0 +1,181 @@
+.timetable-container {
+  min-height: calc(100vh - 128px);
+  padding: 3rem 2rem 1rem;
+}
+
+.timetable-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timetable-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  background: #2a2a2a;
+  border: 1px solid #404040;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  flex-wrap: wrap;
+}
+
+.action-buttons-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.semester-buttons-right {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 2px solid #FF6B00;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+  color: #FF6B00;
+  white-space: nowrap;
+  outline: none;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.action-button:hover {
+  background: rgba(255, 107, 0, 0.1);
+}
+
+.action-button:active {
+  transform: scale(0.98);
+}
+
+.action-button:disabled {
+  border-color: #666;
+  color: #999;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.action-button:disabled:hover {
+  background: transparent;
+  transform: none;
+}
+
+.semester-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+  color: #9ca3af;
+  white-space: nowrap;
+  outline: none;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+
+.semester-button:hover {
+  color: #FF6B00;
+  background: rgba(255, 107, 0, 0.1);
+}
+
+.semester-button.active {
+  background: #FF6B00;
+  color: #ffffff;
+}
+
+.semester-button.active:hover {
+  background: #ff8533;
+  color: #ffffff;
+}
+
+.timetable-section {
+  background: #212121;
+  border: 1px solid #404040;
+  border-radius: 12px;
+  flex: 1;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+  .timetable-container {
+    padding: 2rem 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .timetable-container {
+    padding: 1.5rem 1rem;
+  }
+  
+  .timetable-action-bar {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    padding: 16px;
+  }
+  
+  .action-buttons-left {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  
+  .semester-buttons-right {
+    align-self: center;
+  }
+  
+  .action-button {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+  }
+  
+  .timetable-section {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 480px) {
+  .action-button {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+  
+  .semester-button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .timetable-section {
+    min-height: 450px;
+  }
+}

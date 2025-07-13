@@ -1,45 +1,35 @@
-import { useState, useCallback, useEffect } from 'react';
-import CombinedSearchTimePreference from './CombinedSearchTimePreference';
-import TimetableComponent from './TimetableComponent';
+import { useState, useEffect, useRef } from 'react';
+import { Plus } from 'lucide-react';
+import CustomTimetableComponent from './CustomTimetableComponent';
+import TimetableAddModuleModal from './TimetableAddModuleModal';
+import AddCustomBlockModal from './AddCustomBlockModal';
+import TimePreferenceGrid from './TimePreferenceGrid';
 import { OptimizationService } from '../../services/optimizationService';
 import { TimetableService } from '../../services/timetableService';
 import { supabase } from '../../lib/supabaseClient';
 import Loading from '../Loading/Loading';
-
-interface SelectedModule {
-  [moduleCode: string]: any;
-}
-
-interface TimePreferenceData {
-  [day: string]: {
-    [time: string]: boolean;
-  };
-}
-
-interface TimetableConstraints {
-  preferredTimeSlots: TimePreferenceData;
-}
+import type { SelectedModule, CustomTimeBlock, TimePreferenceData } from './types';
+import './Timetable.css';
 
 export default function Timetable() {
   const [user, setUser] = useState<any>(null);
-  const [selectedModules, setSelectedModules] = useState<SelectedModule>({});
-  const [optimizedModules, setOptimizedModules] = useState<SelectedModule>({});
   const [currentSemester, setCurrentSemester] = useState<"sem1" | "sem2">("sem1");
-  const [constraints, setConstraints] = useState<TimetableConstraints>({
-    preferredTimeSlots: {}
-  });
+  const [modules, setModules] = useState<SelectedModule>({});
+  const [customBlocks, setCustomBlocks] = useState<CustomTimeBlock[]>([]);
+  const [timePreferences, setTimePreferences] = useState<TimePreferenceData>({});
   const [isOptimized, setIsOptimized] = useState(false);
+  const [showAddModuleModal, setShowAddModuleModal] = useState(false);
+  const [showAddCustomBlockModal, setShowAddCustomBlockModal] = useState(false);
+  const [showTimePreferenceModal, setShowTimePreferenceModal] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get current user on mount
   useEffect(() => {
-    const getUser = async () => {
+    async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-    };
+    }
     
     getUser();
     
@@ -50,14 +40,13 @@ export default function Timetable() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load user data when user is available
   useEffect(() => {
-    const loadUserData = async () => {
-      if (!user?.id) {
-        setIsLoading(false);
-        return;
-      }
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
 
+    async function loadUserData() {
       setIsLoading(true);
       
       try {
@@ -67,235 +56,217 @@ export default function Timetable() {
         const timetableData = await TimetableService.loadUserTimetable(user.id, userSemester);
         
         if (timetableData) {
-          console.log('Loaded timetable data:', timetableData);
-          setSelectedModules(timetableData.modules);
-          setConstraints({ preferredTimeSlots: timetableData.timePreferences });
+          setModules(timetableData.modules);
+          setCustomBlocks(timetableData.customBlocks);
+          setTimePreferences(timetableData.timePreferences);
           setIsOptimized(timetableData.isOptimized);
-          setIsMinimized(true);
-          
-          if (timetableData.isOptimized) {
-            setOptimizedModules(timetableData.modules);
-          }
-        } else {
-          setSelectedModules({});
-          setOptimizedModules({});
-          setConstraints({ preferredTimeSlots: {} });
-          setIsOptimized(false);
-          setIsMinimized(false);
         }
       } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error('Failed to load user data:', error);
       } finally {
         setIsLoading(false);
       }
-    };
+    }
 
     loadUserData();
   }, [user?.id]);
 
-  // Auto-save changes with debouncing
   useEffect(() => {
-    const saveChanges = async () => {
-      if (!user?.id || !hasUnsavedChanges) return;
-      
-      const modulesToSave = isOptimized ? optimizedModules : selectedModules;
-      console.log('Auto-saving modules:', modulesToSave);
-      
-      const success = await TimetableService.saveUserTimetable(
+    if (!user?.id) return;
+    
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      await TimetableService.saveUserTimetable(
         user.id,
         currentSemester,
-        modulesToSave,
-        constraints.preferredTimeSlots,
+        modules,
+        timePreferences,
         isOptimized
       );
-      
-      if (success) {
-        console.log('Auto-save successful');
-        setHasUnsavedChanges(false);
-      } else {
-        console.error('Auto-save failed');
-      }
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
+  }, [modules, timePreferences, isOptimized, currentSemester, user?.id]);
 
-    const debounceTimer = setTimeout(saveChanges, 500);
-    return () => clearTimeout(debounceTimer);
-  }, [selectedModules, optimizedModules, constraints, isOptimized, currentSemester, hasUnsavedChanges, user?.id]);
+  async function handleAddCustomBlock(block: CustomTimeBlock) {
+    if (!user?.id) return;
 
-  const handleModulesUpdate = useCallback((modules: SelectedModule) => {
-    console.log('handleModulesUpdate called with:', modules);
-    setSelectedModules(modules);
-    setIsOptimized(false);
-    setOptimizedModules({});
-    setHasUnsavedChanges(true);
-  }, []);
+    await TimetableService.saveCustomBlock(user.id, currentSemester, block);
+    const timetableData = await TimetableService.loadUserTimetable(user.id, currentSemester);
+    if (timetableData) setCustomBlocks(timetableData.customBlocks);
+  }
 
-  const handleTimePreferencesChange = useCallback((timePreferences: TimePreferenceData) => {
-    setConstraints({ preferredTimeSlots: timePreferences });
-    setIsOptimized(false);
-    setHasUnsavedChanges(true);
-  }, []);
+  async function handleDeleteCustomBlock(blockId: string) {
+    if (!user?.id) return;
 
-  const handleSemesterChange = useCallback(async (newSemester: "sem1" | "sem2") => {
+    const success = await TimetableService.deleteCustomBlock(user.id, blockId);
+    if (success) setCustomBlocks(prev => prev.filter(block => block.id !== blockId));
+  }
+
+  async function handleSemesterChange(newSemester: "sem1" | "sem2") {
     if (!user?.id || newSemester === currentSemester) return;
 
     setIsLoading(true);
     
     try {
-      const currentModules = isOptimized ? optimizedModules : selectedModules;
-      await TimetableService.saveUserTimetable(
-        user.id,
-        currentSemester,
-        currentModules,
-        constraints.preferredTimeSlots,
-        isOptimized
-      );
-
+      await TimetableService.saveUserTimetable(user.id, currentSemester, modules, timePreferences, isOptimized);
       await TimetableService.updateUserCurrentSemester(user.id, newSemester);
       setCurrentSemester(newSemester);
 
       const timetableData = await TimetableService.loadUserTimetable(user.id, newSemester);
       
       if (timetableData) {
-        setSelectedModules(timetableData.modules);
-        setConstraints({ preferredTimeSlots: timetableData.timePreferences });
+        setModules(timetableData.modules);
+        setCustomBlocks(timetableData.customBlocks);
+        setTimePreferences(timetableData.timePreferences);
         setIsOptimized(timetableData.isOptimized);
-        setIsMinimized(true);
-        
-        if (timetableData.isOptimized) {
-          setOptimizedModules(timetableData.modules);
-        } else {
-          setOptimizedModules({});
-        }
       } else {
-        setSelectedModules({});
-        setOptimizedModules({});
-        setConstraints({ preferredTimeSlots: {} });
+        setModules({});
+        setCustomBlocks([]);
+        setTimePreferences({});
         setIsOptimized(false);
-        setIsMinimized(false);
       }
-      
-      setHasUnsavedChanges(false);
     } catch (error) {
-      console.error('Error switching semester:', error);
+      console.error('Failed to switch semester:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, currentSemester, selectedModules, optimizedModules, constraints, isOptimized]);
+  }
 
-  const handleOptimize = useCallback(async () => {
-    if (!OptimizationService.canOptimize(selectedModules)) {
-      console.error('Cannot optimize: insufficient module data');
-      return;
-    }
-
-    if (!OptimizationService.validateConstraints(constraints)) {
-      console.error('Invalid constraints: no time slots selected');
-      return;
-    }
+  async function handleOptimize(preferences: TimePreferenceData) {
+    if (!OptimizationService.canOptimize(modules)) return;
 
     setIsOptimizing(true);
     
     try {
-      console.log('Starting optimization with time preferences:', constraints);
-      
       const optimizedTimetable = await OptimizationService.optimizeTimetable(
-        selectedModules,
-        constraints
+        modules,
+        { preferredTimeSlots: preferences },
+        currentSemester
       );
       
-      console.log('Optimization completed:', optimizedTimetable);
-      
-      setOptimizedModules(optimizedTimetable);
+      setModules(optimizedTimetable);
+      setTimePreferences(preferences);
       setIsOptimized(true);
-      setIsMinimized(true);
-      setHasUnsavedChanges(true);
+      setShowTimePreferenceModal(false);
     } catch (error) {
       console.error('Optimization failed:', error);
     } finally {
       setIsOptimizing(false);
     }
-  }, [selectedModules, constraints]);
-
-  // Universal modules update handler that works for both optimized and non-optimized
-  const handleUniversalModulesUpdate = useCallback((modules: SelectedModule) => {
-    console.log('handleUniversalModulesUpdate called with:', modules);
-    console.log('Current isOptimized state:', isOptimized);
-    
-    if (isOptimized) {
-      console.log('Updating optimized modules');
-      setOptimizedModules(modules);
-    } else {
-      console.log('Updating selected modules');
-      setSelectedModules(modules);
-    }
-    
-    setHasUnsavedChanges(true);
-    console.log('Marked as having unsaved changes');
-  }, [isOptimized]);
-
-  const handleResetOptimization = useCallback(() => {
-    setIsOptimized(false);
-    setOptimizedModules({});
-    setIsMinimized(false);
-    setHasUnsavedChanges(true);
-  }, []);
-
-  const handleToggleMinimize = useCallback(() => {
-    setIsMinimized(prev => !prev);
-  }, []);
-
-  const hasModules = Object.keys(selectedModules).length > 0;
-  const canOptimize = hasModules && OptimizationService.canOptimize(selectedModules);
-  const hasUsefulConstraints = OptimizationService.hasUsefulConstraints(constraints);
-
-  if (isLoading) {
-    return <Loading />;
   }
 
+  function handleAddModule(module: any) {
+    if (modules[module.moduleCode]) return;
+
+    const lessonTypeGroups: { [lessonType: string]: any[] } = {};
+    
+    module.semesterData?.timetable?.forEach((lesson: any) => {
+      (lessonTypeGroups[lesson.lessonType] = lessonTypeGroups[lesson.lessonType] || []).push(lesson);
+    });
+
+    const filteredTimetable: any[] = [];
+    Object.values(lessonTypeGroups).forEach(lessons => {
+      const sorted = lessons.sort((a, b) => a.classNo.localeCompare(b.classNo));
+      filteredTimetable.push(...lessons.filter(l => l.classNo === sorted[0].classNo));
+    });
+
+    setModules(prev => ({ 
+      ...prev, 
+      [module.moduleCode]: { ...module.semesterData, timetable: filteredTimetable }
+    }));
+  }
+
+  function handleRemoveModule(moduleCode: string) {
+    setModules(prev => {
+      const updated = { ...prev };
+      delete updated[moduleCode];
+      return updated;
+    });
+  }
+
+  const canOptimize = Object.keys(modules).length > 0 && OptimizationService.canOptimize(modules);
+
+  if (isLoading) return <Loading />;
+
   return (
-    <div className="timetable-page">
-      <CombinedSearchTimePreference
-        onModulesUpdate={handleModulesUpdate}
-        onTimePreferencesChange={handleTimePreferencesChange}
-        onOptimize={handleOptimize}
-        onSemesterChange={handleSemesterChange}
-        currentSemester={currentSemester}
-        initialModules={selectedModules}
-        initialTimePreferences={constraints.preferredTimeSlots}
-        disabled={isOptimizing}
-        hasModules={canOptimize && hasUsefulConstraints}
-        isOptimized={isOptimized}
-        isOptimizing={isOptimizing}
-        onResetOptimization={handleResetOptimization}
-        isMinimized={isMinimized}
-        onToggleMinimize={handleToggleMinimize}
-      />
+    <div className="timetable-container">
+      <div className="timetable-content">
+        <div className="timetable-action-bar">
+          <div className="action-buttons-left">
+            <button className="action-button" onClick={() => setShowAddModuleModal(true)}>
+              <Plus size={20} />
+              Add Module
+            </button>
+            
+            <button className="action-button" onClick={() => setShowAddCustomBlockModal(true)}>
+              <Plus size={20} />
+              Add Custom Time Block
+            </button>
+            
+            <button 
+              className="action-button"
+              onClick={() => setShowTimePreferenceModal(true)}
+              disabled={!canOptimize || isOptimizing}
+            >
+              {isOptimizing ? 'Optimizing...' : 'Create Optimized Timetable'}
+            </button>
+          </div>
 
-      {hasModules && !hasUsefulConstraints && !isMinimized && (
-        <div className="constraint-warning">
-          <div className="warning-message">
-            Please select more time slots in your availability to enable optimization.
-            Select time slots when you're available for classes.
+          <div className="semester-buttons-right">
+            <button 
+              className={`semester-button ${currentSemester === 'sem1' ? 'active' : ''}`}
+              onClick={() => handleSemesterChange('sem1')}
+            >
+              Semester 1
+            </button>
+            <button 
+              className={`semester-button ${currentSemester === 'sem2' ? 'active' : ''}`}
+              onClick={() => handleSemesterChange('sem2')}
+            >
+              Semester 2
+            </button>
           </div>
         </div>
-      )}
 
-      {isOptimizing && (
-        <div className="optimizing-overlay">
-          <div className="optimizing-spinner"></div>
-          <div>Optimizing your timetable...</div>
-          <div className="optimization-details">
-            Analyzing {Object.keys(selectedModules).length} modules with your time preferences
-          </div>
+        {isOptimizing && <Loading />}
+
+        <div className="timetable-section">
+          <CustomTimetableComponent 
+            selectedModules={modules}
+            customBlocks={customBlocks}
+            selectedSemester={currentSemester}
+            onModulesUpdate={setModules}
+            onDeleteCustomBlock={handleDeleteCustomBlock}
+            isOptimized={isOptimized}
+            viewMode="horizontal"
+          />
         </div>
-      )}
 
-      <div className="timetable-section">
-        <TimetableComponent 
-          selectedModules={isOptimized ? optimizedModules : selectedModules}
-          selectedSemester={currentSemester}
-          onModulesUpdate={handleUniversalModulesUpdate}
-          isOptimized={isOptimized}
+        <TimetableAddModuleModal
+          isOpen={showAddModuleModal}
+          onClose={() => setShowAddModuleModal(false)}
+          currentModules={modules}
+          currentSemester={currentSemester}
+          onAddModule={handleAddModule}
+          onRemoveModule={handleRemoveModule}
+        />
+
+        <AddCustomBlockModal
+          isOpen={showAddCustomBlockModal}
+          onClose={() => setShowAddCustomBlockModal(false)}
+          onAddBlock={handleAddCustomBlock}
+        />
+
+        <TimePreferenceGrid
+          isOpen={showTimePreferenceModal}
+          onClose={() => setShowTimePreferenceModal(false)}
+          onOptimize={handleOptimize}
+          initialTimePreferences={timePreferences}
+          isOptimizing={isOptimizing}
         />
       </div>
     </div>
