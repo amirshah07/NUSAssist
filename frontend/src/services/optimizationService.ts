@@ -19,7 +19,7 @@ export class OptimizationService {
   private static apiEndpoint = import.meta.env.VITE_API_URL 
     ? `${import.meta.env.VITE_API_URL}/api/optimize-timetable`
     : import.meta.env.PROD 
-      ? 'https://nusassist-backend-144873295069.us-central1.run.app/api/optimize-timetable'
+      ? 'https://nusassist-backend-144873295069.asia-southeast1.run.app/api/optimize-timetable'
       : 'http://localhost:8080/api/optimize-timetable';
 
   static async optimizeTimetable(
