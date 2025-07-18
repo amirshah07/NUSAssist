@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import {useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { TimeUtils } from './TimeUtils';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import type { TimetableBlock, ModuleBlock, CustomBlock, SelectedModule, CustomTimeBlock } from './types';
 import './CustomTimetableComponent.css';
 
@@ -11,6 +12,7 @@ interface CustomTimetableComponentProps {
   onModulesUpdate?: (modules: SelectedModule) => void;
   onDeleteCustomBlock?: (blockId: string) => void;
   isOptimized?: boolean;
+  moduleOrder?: { [moduleCode: string]: number };
   viewMode?: 'horizontal' | 'vertical';
 }
 
@@ -30,7 +32,11 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const START_HOUR = 7;
 const END_HOUR = 22;
 
-function getColorForModule(moduleCode: string): string {
+function getColorForModule(moduleCode: string, moduleOrder?: { [moduleCode: string]: number }): string {
+  if (moduleOrder && moduleOrder[moduleCode] !== undefined) {
+    return MODULE_COLORS[moduleOrder[moduleCode] % MODULE_COLORS.length];
+  }
+  
   let hash = 0;
   for (let i = 0; i < moduleCode.length; i++) {
     hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
@@ -45,11 +51,16 @@ const CustomTimetableComponent = ({
   onModulesUpdate,
   onDeleteCustomBlock,
   isOptimized = false,
+  moduleOrder,
   viewMode = 'horizontal'
 }: CustomTimetableComponentProps) => {
   const [showingAlternatives, setShowingAlternatives] = useState<AlternativeLessonState | null>(null);
   const [isLoadingAlternatives, setIsLoadingAlternatives] = useState(false);
-  const [showDeleteMenu, setShowDeleteMenu] = useState<string | null>(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; blockId: string; eventName: string }>({
+    isOpen: false,
+    blockId: '',
+    eventName: ''
+  });
 
   const timeSlots = useMemo(() => 
     Array.from({ length: END_HOUR - START_HOUR }, (_, i) => 
@@ -88,7 +99,7 @@ const CustomTimetableComponent = ({
                 startTime: TimeUtils.normalize(entry.startTime),
                 endTime: TimeUtils.normalize(entry.endTime),
                 venue: entry.venue,
-                color: getColorForModule(moduleCode),
+                color: getColorForModule(moduleCode, moduleOrder),
                 originalEntry: entry
               });
             });
@@ -105,7 +116,7 @@ const CustomTimetableComponent = ({
             startTime: TimeUtils.normalize(entry.startTime),
             endTime: TimeUtils.normalize(entry.endTime),
             venue: entry.venue,
-            color: getColorForModule(moduleCode),
+            color: getColorForModule(moduleCode, moduleOrder),
             originalEntry: entry
           });
         });
@@ -154,7 +165,7 @@ const CustomTimetableComponent = ({
             startTime: TimeUtils.normalize(entry.startTime),
             endTime: TimeUtils.normalize(entry.endTime),
             venue: entry.venue,
-            color: getColorForModule(moduleCode),
+            color: getColorForModule(moduleCode, moduleOrder),
             originalEntry: entry
           });
         }
@@ -173,8 +184,13 @@ const CustomTimetableComponent = ({
       event.preventDefault();
       event.stopPropagation();
       
-      const blockKey = `${block.id}_${block.day}`;
-      setShowDeleteMenu(showDeleteMenu === blockKey ? null : blockKey);
+      if (block.id) {
+        setDeleteConfirmModal({
+          isOpen: true,
+          blockId: block.id,
+          eventName: block.eventName
+        });
+      }
       return;
     }
 
@@ -225,20 +241,11 @@ const CustomTimetableComponent = ({
     setShowingAlternatives(null);
   }
 
-  function handleDeleteCustomBlock(blockId: string) {
-    if (!onDeleteCustomBlock || !blockId) return;
-    onDeleteCustomBlock(blockId);
-    setShowDeleteMenu(null);
+  function handleDeleteCustomBlock() {
+    if (!onDeleteCustomBlock || !deleteConfirmModal.blockId) return;
+    onDeleteCustomBlock(deleteConfirmModal.blockId);
+    setDeleteConfirmModal({ isOpen: false, blockId: '', eventName: '' });
   }
-
-  useEffect(() => {
-    function handleBodyClick() {
-      setShowDeleteMenu(null);
-    }
-
-    document.addEventListener('click', handleBodyClick);
-    return () => document.removeEventListener('click', handleBodyClick);
-  }, []);
 
   function getBlocksForTimeSlot(day: string, timeSlot: string) {
     const slotStart = TimeUtils.toMinutes(timeSlot);
@@ -355,35 +362,13 @@ const CustomTimetableComponent = ({
     }
 
     return [...moduleBlocks, ...convertCustomBlocks(customBlocks)];
-  }, [selectedModules, customBlocks, showingAlternatives, isOptimized]);
+  }, [selectedModules, customBlocks, showingAlternatives, isOptimized, moduleOrder]);
 
   return (
+  <>
     <div className={`custom-timetable-wrapper ${viewMode}`}>
       {showingAlternatives && (
-        <div className="alternatives-info">
-          <span>
-            {isLoadingAlternatives ? 
-              'Loading alternatives...' : 
-              `Viewing alternatives for ${showingAlternatives.moduleCode} ${showingAlternatives.lessonType} (currently Class ${showingAlternatives.classNo})`
-            }
-          </span>
-          <button 
-            className="cancel-alternatives"
-            onClick={() => setShowingAlternatives(null)}
-            disabled={isLoadingAlternatives}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {showingAlternatives && !isLoadingAlternatives && (
-        <div className="alternatives-instructions">
-          <p>
-            <strong>Click on any purple class slot</strong> to switch to that class group.
-            All time slots for that class will be selected together.
-          </p>
-        </div>
+        <div className="alternatives-info"></div>
       )}
 
       <div className="custom-timetable-grid">
@@ -410,10 +395,9 @@ const CustomTimetableComponent = ({
                         block.lessonType === showingAlternatives.lessonType &&
                         block.classNo === showingAlternatives.classNo;
 
-                      const blockKey = block.type === 'custom' 
-                        ? `${block.id}_${block.day}` 
+                      const blockKey = block.type === 'custom'
+                        ? `${block.id}_${block.day}`
                         : `${block.moduleCode}-${block.lessonType}-${block.classNo}-${block.startTime}-${index}`;
-                      const showMenu = showDeleteMenu === blockKey;
 
                       return (
                         <div
@@ -422,8 +406,7 @@ const CustomTimetableComponent = ({
                           style={{
                             backgroundColor: block.color,
                             ...position,
-                            position: 'absolute',
-                            border: showMenu ? '2px solid #FF6B00' : 'none'
+                            position: 'absolute'
                           }}
                           onClick={(e) => handleBlockClick(block, e)}
                         >
@@ -442,67 +425,6 @@ const CustomTimetableComponent = ({
                               <div className="block-time">{block.startTime} - {block.endTime}</div>
                             )}
                           </div>
-
-                          {showMenu && block.type === 'custom' && block.id && (
-                            <div 
-                              className="custom-block-menu" 
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                position: 'fixed',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                background: '#2a2a2a',
-                                border: '2px solid #ef4444',
-                                borderRadius: '8px',
-                                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
-                                zIndex: 9999,
-                                minWidth: '200px'
-                              }}
-                            >
-                              <div style={{ 
-                                padding: '12px',
-                                background: '#1a1a1a',
-                                borderRadius: '6px 6px 0 0',
-                                textAlign: 'center',
-                                fontSize: '0.9rem',
-                                color: '#ef4444',
-                                fontWeight: '600'
-                              }}>
-                                Delete "{block.eventName}"?
-                              </div>
-                              <div style={{ padding: '12px', display: 'flex', gap: '8px' }}>
-                                <button 
-                                  onClick={() => setShowDeleteMenu(null)}
-                                  style={{
-                                    flex: 1,
-                                    padding: '8px',
-                                    background: '#666',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Cancel
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteCustomBlock(block.id!)}
-                                  style={{
-                                    flex: 1,
-                                    padding: '8px',
-                                    background: '#ef4444',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       );
                     })}
@@ -520,7 +442,18 @@ const CustomTimetableComponent = ({
         </div>
       )}
     </div>
-  );
-};
+
+    <ConfirmModal
+      isOpen={deleteConfirmModal.isOpen}
+      onClose={() => setDeleteConfirmModal({ isOpen: false, blockId: '', eventName: '' })}
+      onConfirm={handleDeleteCustomBlock}
+      title="Delete Event"
+      message={`Delete "${deleteConfirmModal.eventName}"?`}
+      confirmText="Delete"
+      cancelText="Cancel"
+    />
+  </>
+);
+}
 
 export default CustomTimetableComponent;

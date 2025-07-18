@@ -18,6 +18,7 @@ export default function Timetable() {
   const [customBlocks, setCustomBlocks] = useState<CustomTimeBlock[]>([]);
   const [timePreferences, setTimePreferences] = useState<TimePreferenceData>({});
   const [isOptimized, setIsOptimized] = useState(false);
+  const [moduleOrder, setModuleOrder] = useState<{ [moduleCode: string]: number }>({});
   const [showAddModuleModal, setShowAddModuleModal] = useState(false);
   const [showAddCustomBlockModal, setShowAddCustomBlockModal] = useState(false);
   const [showTimePreferenceModal, setShowTimePreferenceModal] = useState(false);
@@ -60,6 +61,7 @@ export default function Timetable() {
           setCustomBlocks(timetableData.customBlocks);
           setTimePreferences(timetableData.timePreferences);
           setIsOptimized(timetableData.isOptimized);
+          setModuleOrder(timetableData.moduleOrder);
         }
       } catch (error) {
         console.error('Failed to load user data:', error);
@@ -82,14 +84,15 @@ export default function Timetable() {
         currentSemester,
         modules,
         timePreferences,
-        isOptimized
+        isOptimized,
+        moduleOrder
       );
     }, 1000);
 
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [modules, timePreferences, isOptimized, currentSemester, user?.id]);
+  }, [modules, timePreferences, isOptimized, currentSemester, user?.id, moduleOrder]);
 
   async function handleAddCustomBlock(block: CustomTimeBlock) {
     if (!user?.id) return;
@@ -112,7 +115,7 @@ export default function Timetable() {
     setIsLoading(true);
     
     try {
-      await TimetableService.saveUserTimetable(user.id, currentSemester, modules, timePreferences, isOptimized);
+      await TimetableService.saveUserTimetable(user.id, currentSemester, modules, timePreferences, isOptimized, moduleOrder);
       await TimetableService.updateUserCurrentSemester(user.id, newSemester);
       setCurrentSemester(newSemester);
 
@@ -123,11 +126,13 @@ export default function Timetable() {
         setCustomBlocks(timetableData.customBlocks);
         setTimePreferences(timetableData.timePreferences);
         setIsOptimized(timetableData.isOptimized);
+        setModuleOrder(timetableData.moduleOrder);
       } else {
         setModules({});
         setCustomBlocks([]);
         setTimePreferences({});
         setIsOptimized(false);
+        setModuleOrder({});
       }
     } catch (error) {
       console.error('Failed to switch semester:', error);
@@ -159,6 +164,15 @@ export default function Timetable() {
     }
   }
 
+  function getNextAvailableIndex(): number {
+    const usedIndices = new Set(Object.values(moduleOrder));
+    let index = 0;
+    while (usedIndices.has(index)) {
+      index++;
+    }
+    return index;
+  }
+
   function handleAddModule(module: any) {
     if (modules[module.moduleCode]) return;
 
@@ -174,18 +188,29 @@ export default function Timetable() {
       filteredTimetable.push(...lessons.filter(l => l.classNo === sorted[0].classNo));
     });
 
-    setModules(prev => ({ 
-      ...prev, 
+    const updatedModules = { 
+      ...modules, 
       [module.moduleCode]: { ...module.semesterData, timetable: filteredTimetable }
-    }));
+    };
+
+    const updatedOrder = { ...moduleOrder };
+    if (updatedOrder[module.moduleCode] === undefined) {
+      updatedOrder[module.moduleCode] = getNextAvailableIndex();
+    }
+
+    setModules(updatedModules);
+    setModuleOrder(updatedOrder);
   }
 
   function handleRemoveModule(moduleCode: string) {
-    setModules(prev => {
-      const updated = { ...prev };
-      delete updated[moduleCode];
-      return updated;
-    });
+    const updatedModules = { ...modules };
+    delete updatedModules[moduleCode];
+    
+    const updatedOrder = { ...moduleOrder };
+    delete updatedOrder[moduleCode];
+    
+    setModules(updatedModules);
+    setModuleOrder(updatedOrder);
   }
 
   const canOptimize = Object.keys(modules).length > 0 && OptimizationService.canOptimize(modules);
@@ -242,6 +267,7 @@ export default function Timetable() {
             onModulesUpdate={setModules}
             onDeleteCustomBlock={handleDeleteCustomBlock}
             isOptimized={isOptimized}
+            moduleOrder={moduleOrder}
             viewMode="horizontal"
           />
         </div>

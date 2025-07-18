@@ -26,6 +26,8 @@ export default function TimePreferenceGrid({
   const [preferences, setPreferences] = useState<TimePreferenceData>({});
   const [isDragging, setIsDragging] = useState(false);
   const [dragValue, setDragValue] = useState(true);
+  const [mouseDownTime, setMouseDownTime] = useState(0);
+  const [hasMovedWhileDown, setHasMovedWhileDown] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const timeSlots = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => 
@@ -61,39 +63,60 @@ export default function TimePreferenceGrid({
     if (isOptimizing) return;
     
     event.preventDefault();
-    const newValue = !preferences[day]?.[time];
+    setMouseDownTime(Date.now());
+    setHasMovedWhileDown(false);
     
-    setIsDragging(true);
+    const newValue = !preferences[day]?.[time];
     setDragValue(newValue);
-    toggleTimeSlot(day, time, newValue);
   }
 
   function handleMouseEnter(day: string, time: string) {
-    if (!isDragging || isOptimizing) return;
-    toggleTimeSlot(day, time, dragValue);
+    if (!mouseDownTime || isOptimizing) return;
+
+    if (!hasMovedWhileDown) {
+      setHasMovedWhileDown(true);
+      setIsDragging(true);
+      
+      const initialValue = dragValue;
+      toggleTimeSlot(day, time, initialValue);
+    } else if (isDragging) {
+      toggleTimeSlot(day, time, dragValue);
+    }
   }
 
-  function handleClick(day: string, time: string, event: React.MouseEvent) {
-    if (isOptimizing || isDragging) return;
+  function handleMouseUp(day: string, time: string, event: React.MouseEvent) {
+    if (isOptimizing) return;
+    
     event.preventDefault();
-    toggleTimeSlot(day, time);
+    
+    const timeSinceMouseDown = Date.now() - mouseDownTime;
+    
+    if (!hasMovedWhileDown && timeSinceMouseDown < 200) {
+      toggleTimeSlot(day, time);
+    }
+    
+    setMouseDownTime(0);
+    setHasMovedWhileDown(false);
+    setIsDragging(false);
   }
 
   useEffect(() => {
-    function handleMouseUp() {
+    function handleGlobalMouseUp() {
+      setMouseDownTime(0);
+      setHasMovedWhileDown(false);
       setIsDragging(false);
     }
     
-    if (isDragging) {
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('mouseleave', handleMouseUp);
+    if (mouseDownTime > 0) {
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mouseleave', handleGlobalMouseUp);
       
       return () => {
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('mouseleave', handleMouseUp);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('mouseleave', handleGlobalMouseUp);
       };
     }
-  }, [isDragging]);
+  }, [mouseDownTime]);
 
   function setAllSlots(value: boolean) {
     const newPreferences: TimePreferenceData = {};
@@ -156,7 +179,7 @@ export default function TimePreferenceGrid({
           </div>
 
           <div className="grid-instructions">
-            <p>Click and drag to select when you ARE available for classes. Green = available, Red = blocked.</p>
+            <p>Click to toggle individual slots or click and drag to select multiple. Green = available, Red = blocked.</p>
           </div>
 
           <div className="time-preference-grid" ref={gridRef}>
@@ -183,7 +206,7 @@ export default function TimePreferenceGrid({
                         className={`time-slot ${isAvailable ? 'available' : 'blocked'}`}
                         onMouseDown={(e) => handleMouseDown(day, time, e)}
                         onMouseEnter={() => handleMouseEnter(day, time)}
-                        onClick={(e) => handleClick(day, time, e)}
+                        onMouseUp={(e) => handleMouseUp(day, time, e)}
                         style={{ cursor: isOptimizing ? 'not-allowed' : 'pointer' }}
                       >
                         <div className="slot-content">

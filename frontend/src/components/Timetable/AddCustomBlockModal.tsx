@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { CustomTimeBlock } from './types';
 import './AddCustomBlockModal.css';
+import AlertModal from '../Gpa/AlertModal';
 
 interface AddCustomBlockModalProps {
   isOpen: boolean;
@@ -21,6 +22,10 @@ const AddCustomBlockModal = ({ isOpen, onClose, onAddBlock }: AddCustomBlockModa
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [selectedColor, setSelectedColor] = useState(COLORS[4]);
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    message: ''
+  });
 
   function toggleDay(day: string) {
     setSelectedDays(prev => 
@@ -38,21 +43,29 @@ const AddCustomBlockModal = ({ isOpen, onClose, onAddBlock }: AddCustomBlockModa
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
     const trimmedName = eventName.trim();
     
     if (!trimmedName) {
-      alert('Please enter an event name');
+      setAlertModal({
+        isOpen: true,
+        message: 'Please enter an event name'
+      });
       return;
     }
     
     if (selectedDays.length === 0) {
-      alert('Please select at least one day');
+      setAlertModal({
+        isOpen: true,
+        message: 'Please select at least one day'
+      });
       return;
     }
     
     if (!startTime || !endTime || startTime >= endTime) {
-      alert('Please select valid start and end times');
+      setAlertModal({
+        isOpen: true,
+        message: 'Please select valid start and end times'
+      });
       return;
     }
 
@@ -164,6 +177,11 @@ const AddCustomBlockModal = ({ isOpen, onClose, onAddBlock }: AddCustomBlockModa
           </div>
         </form>
       </div>
+      <AlertModal
+      isOpen={alertModal.isOpen}
+      onClose={() => setAlertModal({ isOpen: false, message: '' })}
+      message={alertModal.message}
+    />
     </div>
   );
 };
