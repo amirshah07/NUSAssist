@@ -9,6 +9,7 @@ interface TimetableData {
   isOptimized: boolean;
   TotalMcs: number;
   ModuleTitleList: { [moduleCode: string]: string };
+  moduleOrder: { [moduleCode: string]: number };
 }
 
 export class TimetableService {
@@ -44,7 +45,8 @@ export class TimetableService {
         semester,
         isOptimized: timetableData.data?.is_optimized || false,
         TotalMcs: timetableData.data?.TotalMcs || 0,
-        ModuleTitleList: timetableData.data?.ModuleTitleList || {}
+        ModuleTitleList: timetableData.data?.ModuleTitleList || {},
+        moduleOrder: timetableData.data?.module_order || {}
       };
     } catch (error) {
       console.error('Failed to load user timetable:', error);
@@ -57,7 +59,8 @@ export class TimetableService {
     semester: "sem1" | "sem2",
     modules: SelectedModule,
     timePreferences: TimePreferenceData,
-    isOptimized: boolean
+    isOptimized: boolean,
+    moduleOrder: { [moduleCode: string]: number }
   ): Promise<boolean> {
     try {
       const currentUser = await this.getCurrentUser();
@@ -85,6 +88,7 @@ export class TimetableService {
         is_optimized: isOptimized,
         TotalMcs,
         ModuleTitleList,
+        module_order: moduleOrder,
         updated_at: new Date().toISOString()
       };
 
