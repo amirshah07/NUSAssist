@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { TimetableService } from '../../services/timetableService';
-import { getCurrentSemesterInfo, ACADEMIC_YEAR } from './AcademicCalendar';
+import { getCurrentSemesterInfo, ACADEMIC_YEAR} from './AcademicCalendar';
 import './SemesterCard.css';
 
 interface Module {
@@ -15,12 +15,16 @@ const MODULE_COLORS = [
     '#84cc16', '#f97316', '#ec4899', '#6366f1', '#14b8a6', '#eab308'
 ];
 
-function getColorForModule(moduleCode: string): string {
-    let hash = 0;
-    for (let i = 0; i < moduleCode.length; i++) {
-        hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
+function getColorForModule(moduleCode: string, moduleOrder?: { [moduleCode: string]: number }): string {
+  if (moduleOrder && moduleOrder[moduleCode] !== undefined) {
+    return MODULE_COLORS[moduleOrder[moduleCode] % MODULE_COLORS.length];
+  }
+  
+  let hash = 0;
+  for (let i = 0; i < moduleCode.length; i++) {
+    hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
 }
 
 export default function SemesterCard() {
@@ -42,16 +46,14 @@ export default function SemesterCard() {
                 const currentDate = new Date();
                 let displaySemester: 'sem1' | 'sem2' = 'sem1';
 
-                if (currentDate > ACADEMIC_YEAR.semester2.end && currentDate < ACADEMIC_YEAR.semester1.start) {
-                    // After Semester 2 end and before next Semester 1 start - show upcoming Semester 1
-                    displaySemester = 'sem1';
-                } else if (currentDate >= ACADEMIC_YEAR.semester1.start && currentDate <= ACADEMIC_YEAR.semester1.end) {
-                    // During Semester 1
-                    displaySemester = 'sem1';
-                } else {
-                    // During or before Semester 2
+                if (currentDate > ACADEMIC_YEAR.semester1.end) {
+                    // Winter onwards display semester 2
                     displaySemester = 'sem2';
+                } else {
+                    // Once new AY Calendar updated, during summer display semester 1
+                    displaySemester = 'sem1';
                 }
+                console.log(`Displaying semester: ${displaySemester}`);
 
                 // Load timetable data
                 const timetableData = await TimetableService.loadUserTimetable(user.id, displaySemester);
@@ -68,7 +70,7 @@ export default function SemesterCard() {
                 Object.entries(timetableData.modules).forEach(([moduleCode]) => {
                     modules.push({
                         code: moduleCode,
-                        color: getColorForModule(moduleCode)
+                        color: getColorForModule(moduleCode, timetableData.moduleOrder)
                     });
                 });
 

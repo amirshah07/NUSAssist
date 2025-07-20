@@ -26,12 +26,16 @@ const MODULE_COLORS = [
     '#84cc16', '#f97316', '#ec4899', '#6366f1', '#14b8a6', '#eab308'
 ];
 
-function getColorForModule(moduleCode: string): string {
-    let hash = 0;
-    for (let i = 0; i < moduleCode.length; i++) {
-        hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
+function getColorForModule(moduleCode: string, moduleOrder?: { [moduleCode: string]: number }): string {
+  if (moduleOrder && moduleOrder[moduleCode] !== undefined) {
+    return MODULE_COLORS[moduleOrder[moduleCode] % MODULE_COLORS.length];
+  }
+  
+  let hash = 0;
+  for (let i = 0; i < moduleCode.length; i++) {
+    hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
 }
 
 export default function TodaySchedule() {
@@ -91,7 +95,7 @@ export default function TodaySchedule() {
                                     title: timetableData.ModuleTitleList[moduleCode] || '',
                                     type: lesson.lessonType,
                                     venue: lesson.venue,
-                                    color: getColorForModule(moduleCode)
+                                    color: getColorForModule(moduleCode, timetableData.moduleOrder)
                                 });
                             }
                         });
