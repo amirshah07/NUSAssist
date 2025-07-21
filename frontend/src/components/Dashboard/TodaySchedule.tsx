@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { TimetableService } from '../../services/timetableService';
 import { getCurrentSemesterInfo } from './AcademicCalendar';
 import './TodaySchedule.css';
+import './ProgressCard.css';
 
 interface ScheduleItem {
     time: string;
@@ -214,7 +215,7 @@ export default function TodaySchedule() {
                 {loading ? (
                     <div className="today-schedule-empty">
                         <Calendar size={48} />
-                        <p>Loading today's schedule...</p>
+                        <div className="loading-spinner"></div>
                     </div>
                 ) : scheduleWithGaps.length > 0 ? (
                     scheduleWithGaps.map((item, index) => (

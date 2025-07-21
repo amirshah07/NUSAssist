@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { TimetableService } from '../../services/timetableService';
-import { getCurrentSemesterInfo, ACADEMIC_YEAR} from './AcademicCalendar';
+import { getCurrentSemesterInfo, ACADEMIC_YEAR } from './AcademicCalendar';
 import './SemesterCard.css';
+import './ProgressCard.css'
 
 interface Module {
     code: string;
@@ -102,7 +103,9 @@ export default function SemesterCard() {
             
             <div className="semester-card-content">
                 <div className="semester-summary">
-                    {loading ? 'Loading...' : `${totalModules} modules | ${totalMCs} MCs`} {weekDisplay && ` | ${weekDisplay}`} 
+                    {loading ? (<div className="semester-loading">
+                        <div className="loading-spinner"></div>
+                    </div>) : `${totalModules} modules | ${totalMCs} MCs`} {weekDisplay && ` | ${weekDisplay}`} 
                 </div>
                 
                 <ul className={listClassName}>
