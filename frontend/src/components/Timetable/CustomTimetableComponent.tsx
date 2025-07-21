@@ -4,6 +4,7 @@ import { TimeUtils } from './TimeUtils';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
 import type { TimetableBlock, ModuleBlock, CustomBlock, SelectedModule, CustomTimeBlock } from './types';
 import './CustomTimetableComponent.css';
+import { X } from 'lucide-react';
 
 interface CustomTimetableComponentProps {
   selectedModules: SelectedModule;
@@ -60,6 +61,10 @@ const CustomTimetableComponent = ({
     isOpen: false,
     blockId: '',
     eventName: ''
+  });
+  const [moreBlocksModal, setMoreBlocksModal] = useState<{ isOpen: boolean; blocks: TimetableBlock[] }>({
+    isOpen: false,
+    blocks: []
   });
 
   const timeSlots = useMemo(() => 
@@ -290,12 +295,16 @@ const CustomTimetableComponent = ({
       overlappingGroups.push(group);
     });
 
-    const result: Array<{ block: TimetableBlock; position: any }> = [];
+    const result: Array<{ block: TimetableBlock; position: any } | { type: 'more'; count: number; position: any; blocks: TimetableBlock[] }> = [];
 
     overlappingGroups.forEach(group => {
       group.sort((a, b) => TimeUtils.toMinutes(a.startTime) - TimeUtils.toMinutes(b.startTime));
 
-      group.forEach((block, index) => {
+      const maxVisibleBlocks = 3;
+      const visibleBlocks = group.slice(0, maxVisibleBlocks);
+      const hiddenBlocks = group.slice(maxVisibleBlocks);
+
+      visibleBlocks.forEach((block, index) => {
         const blockStart = TimeUtils.toMinutes(block.startTime);
         const blockStartHour = Math.floor(blockStart / 60) * 60;
         
@@ -306,7 +315,8 @@ const CustomTimetableComponent = ({
         const blockHeightPx = (blockDurationMinutes / 60) * 60;
         const offsetMinutes = blockStart - slotStart;
         const offsetPx = (offsetMinutes / 60) * 60;
-        const width = 100 / group.length;
+        const totalWidth = group.length > maxVisibleBlocks ? 75 : 100;
+        const width = totalWidth / visibleBlocks.length;
         const left = index * width;
 
         result.push({
@@ -320,6 +330,29 @@ const CustomTimetableComponent = ({
           }
         });
       });
+
+      if (hiddenBlocks.length > 0) {
+        const firstBlock = visibleBlocks[0];
+        const blockStart = TimeUtils.toMinutes(firstBlock.startTime);
+        const blockEnd = TimeUtils.toMinutes(firstBlock.endTime);
+        const blockDurationMinutes = blockEnd - blockStart;
+        const blockHeightPx = (blockDurationMinutes / 60) * 60;
+        const offsetMinutes = blockStart - slotStart;
+        const offsetPx = (offsetMinutes / 60) * 60;
+
+        result.push({
+          type: 'more',
+          count: hiddenBlocks.length,
+          blocks: hiddenBlocks,
+          position: {
+            top: `${offsetPx}px`,
+            left: '75%',
+            width: '25%',
+            height: `${blockHeightPx}px`,
+            minHeight: '30px'
+          }
+        });
+      }
     });
 
     return result;
@@ -350,7 +383,9 @@ const CustomTimetableComponent = ({
             const isCurrentSelection = moduleBlocks.some(existing =>
               existing.moduleCode === lesson.moduleCode &&
               existing.lessonType === lesson.lessonType &&
-              existing.classNo === lesson.classNo
+              existing.classNo === lesson.classNo &&
+              existing.day === lesson.day &&
+              existing.startTime === lesson.startTime
             );
             
             if (!isCurrentSelection) {
@@ -387,7 +422,30 @@ const CustomTimetableComponent = ({
                 const blocksInSlot = getBlocksForTimeSlot(day, timeSlot);
                 return (
                   <div key={`${day}-${timeSlot}`} className="timetable-cell">
-                    {blocksInSlot.map(({ block, position }, index) => {
+                    {blocksInSlot.map((item, index) => {
+                      if ('type' in item && item.type === 'more') {
+                        return (
+                          <div
+                            key={`more-${day}-${timeSlot}-${index}`}
+                            className="timetable-block more-indicator"
+                            style={{
+                              backgroundColor: '#7c3aed',
+                              ...item.position,
+                              position: 'absolute',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => setMoreBlocksModal({ isOpen: true, blocks: item.blocks })}
+                          >
+                            <div className="block-content">
+                              <div className="block-title">+{item.count} more</div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (!('block' in item)) return null;
+
+                      const { block, position } = item;
                       const isAlternative = isAlternativeBlock(block);
                       const isCurrentSelection = showingAlternatives &&
                         block.type === 'module' &&
@@ -452,6 +510,44 @@ const CustomTimetableComponent = ({
       confirmText="Delete"
       cancelText="Cancel"
     />
+
+    {moreBlocksModal.isOpen && (
+      <div className="modal-overlay" onClick={() => setMoreBlocksModal({ isOpen: false, blocks: [] })}>
+        <div className="modal-container more-blocks-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3 className="modal-title">All Options</h3>
+            <button className="modal-close" onClick={() => setMoreBlocksModal({ isOpen: false, blocks: [] })}>
+              <X size={20} />
+            </button>
+          </div>
+          <div className="more-blocks-content">
+            {moreBlocksModal.blocks.map((block, index) => (
+              <div 
+                key={index} 
+                className="more-block-item"
+                onClick={() => {
+                  handleBlockClick(block, new MouseEvent('click') as any);
+                  setMoreBlocksModal({ isOpen: false, blocks: [] });
+                }}
+              >
+                <div className="more-block-header">
+                  <span className="more-block-code">
+                    {block.type === 'custom' ? block.eventName : block.moduleCode}
+                  </span>
+                  {block.type === 'module' && (
+                    <span className="more-block-type">{block.lessonType} {block.classNo}</span>
+                  )}
+                </div>
+                {block.type === 'module' && (
+                  <div className="more-block-venue">{block.venue}</div>
+                )}
+                <div className="more-block-time">{block.startTime} - {block.endTime}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
   </>
 );
 }

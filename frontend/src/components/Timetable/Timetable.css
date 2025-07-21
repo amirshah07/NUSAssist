@@ -1,5 +1,4 @@
 .timetable-container {
-  min-height: calc(100vh - 128px);
   padding: 3rem 2rem 1rem;
 }
 
@@ -117,10 +116,6 @@
   background: #212121;
   border: 1px solid #404040;
   border-radius: 12px;
-  flex: 1;
-  min-height: 600px;
-  display: flex;
-  flex-direction: column;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
@@ -158,10 +153,6 @@
     justify-content: center;
     padding: 12px 16px;
   }
-  
-  .timetable-section {
-    min-height: 500px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -173,9 +164,5 @@
   .semester-button {
     padding: 6px 12px;
     font-size: 0.85rem;
-  }
-  
-  .timetable-section {
-    min-height: 450px;
   }
 }
