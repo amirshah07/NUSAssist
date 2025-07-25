@@ -166,3 +166,49 @@
     font-size: 0.85rem;
   }
 }
+
+.export-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid #FF6B00;
+  color: #FF6B00;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.15s ease;
+  z-index: 100;
+}
+
+.export-button:hover {
+  background: rgba(255, 107, 0, 0.1);
+}
+
+.export-button:active {
+  transform: scale(0.98);
+}
+
+.export-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 768px) {
+  .export-button {
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .export-button svg {
+    width: 20px;
+    height: 20px;
+  }
+}

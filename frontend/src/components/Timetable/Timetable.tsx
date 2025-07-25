@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import CustomTimetableComponent from './CustomTimetableComponent';
 import TimetableAddModuleModal from './TimetableAddModuleModal';
 import AddCustomBlockModal from './AddCustomBlockModal';
 import TimePreferenceGrid from './TimePreferenceGrid';
 import { OptimizationService } from '../../services/optimizationService';
 import { TimetableService } from '../../services/timetableService';
+import { ICalendarService } from '../../services/iCalendarService';
 import { supabase } from '../../lib/supabaseClient';
 import Loading from '../Loading/Loading';
 import type { SelectedModule, CustomTimeBlock, TimePreferenceData } from './types';
@@ -213,6 +214,19 @@ export default function Timetable() {
     setModuleOrder(updatedOrder);
   }
 
+  function handleExportCalendar() {
+    const hasContent = Object.keys(modules).length > 0 || customBlocks.length > 0;
+    
+    if (!hasContent) {
+      alert('No timetable data to export');
+      return;
+    }
+
+    const calendarContent = ICalendarService.generateICalendar(modules, customBlocks, currentSemester);
+    const filename = `NUS_${currentSemester === 'sem1' ? 'Sem1' : 'Sem2'}_Timetable.ics`;
+    ICalendarService.downloadICalendar(calendarContent, filename);
+  }
+
   const canOptimize = Object.keys(modules).length > 0 && OptimizationService.canOptimize(modules);
 
   if (isLoading) return <Loading />;
@@ -294,6 +308,14 @@ export default function Timetable() {
           initialTimePreferences={timePreferences}
           isOptimizing={isOptimizing}
         />
+
+        <button 
+          className="export-button" 
+          onClick={handleExportCalendar}
+          title="Export as iCalendar"
+        >
+          <Download />
+        </button>
       </div>
     </div>
   );
