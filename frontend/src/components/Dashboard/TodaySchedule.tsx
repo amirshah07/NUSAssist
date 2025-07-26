@@ -51,7 +51,8 @@ export default function TodaySchedule() {
                     setLoading(false);
                     return;
                 }
-                const semesterInfo = getCurrentSemesterInfo();
+                const today = new Date();
+                const semesterInfo = getCurrentSemesterInfo(today);
                 if (!semesterInfo.semester || semesterInfo.week === 'recess' || semesterInfo.week === 'reading' || semesterInfo.week === 'exam') {
                     setTodaySchedule([]);
                     setLoading(false);
@@ -66,7 +67,6 @@ export default function TodaySchedule() {
                     return;
                 }
 
-                const today = new Date();
                 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                 const todayName = dayNames[today.getDay()];
 
@@ -87,7 +87,7 @@ export default function TodaySchedule() {
                                     const minute = time.substring(3, 5) || '00';
                                     const ampm = hour >= 12 ? 'PM' : 'AM';
                                     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                                    return `${displayHour}:${minute} ${ampm}`;
+                                    return `${displayHour}:${minute.padStart(2, '0')} ${ampm}`;
                                 };
 
                                 todaysClasses.push({
@@ -110,7 +110,7 @@ export default function TodaySchedule() {
                             const hourNum = parseInt(hour);
                             const ampm = hourNum >= 12 ? 'PM' : 'AM';
                             const displayHour = hourNum === 0 ? 12 : hourNum > 12 ? hourNum - 12 : hourNum;
-                            return `${displayHour}:${minute} ${ampm}`;
+                            return `${displayHour}:${minute.padStart(2, '0')} ${ampm}`;
                         };
 
                         todaysClasses.push({
