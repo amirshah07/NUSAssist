@@ -61,7 +61,7 @@ const AddCustomBlockModal = ({ isOpen, onClose, onAddBlock }: AddCustomBlockModa
       return;
     }
     
-    if (!startTime || !endTime || startTime >= endTime) {
+    if (!startTime || !endTime || startTime >= endTime || startTime < "07:00" || endTime > "21:00" ) {
       setAlertModal({
         isOpen: true,
         message: 'Please select valid start and end times'
