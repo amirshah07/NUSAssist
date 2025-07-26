@@ -1,5 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
+import { TimetableService } from '../../services/timetableService';
+import { getCurrentSemesterInfo } from './AcademicCalendar';
 import './TodaySchedule.css';
+import './ProgressCard.css';
 
 interface ScheduleItem {
     time: string;
@@ -17,36 +22,120 @@ interface FreeTimeSlot {
 
 type FullScheduleItem = ScheduleItem | FreeTimeSlot;
 
-export default function TodaySchedule() {
-    // This data will come from backend, dummy data for now
-    const todaySchedule: ScheduleItem[] = [
-        { 
-            time: '8:00 AM - 10:00 AM', 
-            module: 'CS2103T', 
-            title: 'Software Engineering', 
-            type: 'Lecture', 
-            venue: 'COM1-0210', 
-            color: '#10b981' 
-        },
-        { 
-            time: '10:00 AM - 12:00 PM', 
-            module: 'CS2106', 
-            title: 'Operating Systems', 
-            type: 'Tutorial', 
-            venue: 'LT19', 
-            color: '#3b82f6' 
-        },
-        { 
-            time: '2:00 PM - 4:00 PM', 
-            module: 'CS3230', 
-            title: 'Algorithms', 
-            type: 'Lab', 
-            venue: 'COM1-0201', 
-            color: '#a855f7' 
-        }
-    ];
+const MODULE_COLORS = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4',
+    '#84cc16', '#f97316', '#ec4899', '#6366f1', '#14b8a6', '#eab308'
+];
 
-    // Helper function to parse time string to minutes from midnight
+function getColorForModule(moduleCode: string, moduleOrder?: { [moduleCode: string]: number }): string {
+  if (moduleOrder && moduleOrder[moduleCode] !== undefined) {
+    return MODULE_COLORS[moduleOrder[moduleCode] % MODULE_COLORS.length];
+  }
+  
+  let hash = 0;
+  for (let i = 0; i < moduleCode.length; i++) {
+    hash = moduleCode.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
+}
+
+export default function TodaySchedule() {
+    const [todaySchedule, setTodaySchedule] = useState<ScheduleItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadTodaySchedule() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    setLoading(false);
+                    return;
+                }
+                const semesterInfo = getCurrentSemesterInfo();
+                if (!semesterInfo.semester || semesterInfo.week === 'recess' || semesterInfo.week === 'reading' || semesterInfo.week === 'exam') {
+                    setTodaySchedule([]);
+                    setLoading(false);
+                    return;
+                }
+                const currentSemester = semesterInfo.semester === 1 ? 'sem1' : 'sem2';
+
+                const timetableData = await TimetableService.loadUserTimetable(user.id, currentSemester);
+                if (!timetableData || Object.keys(timetableData.modules).length === 0) {
+                    setTodaySchedule([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const today = new Date();
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const todayName = dayNames[today.getDay()];
+
+                if (todayName === 'Saturday' || todayName === 'Sunday') {
+                    setTodaySchedule([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const todaysClasses: ScheduleItem[] = [];
+
+                Object.entries(timetableData.modules).forEach(([moduleCode, moduleData]) => {
+                    if (moduleData?.timetable) {
+                        moduleData.timetable.forEach((lesson: any) => {
+                            if (lesson.day === todayName) {
+                                const formatTime = (time: string) => {
+                                    const hour = parseInt(time.substring(0, 2));
+                                    const minute = time.substring(3, 5) || '00';
+                                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                                    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                                    return `${displayHour}:${minute} ${ampm}`;
+                                };
+
+                                todaysClasses.push({
+                                    time: `${formatTime(lesson.startTime)} - ${formatTime(lesson.endTime)}`,
+                                    module: moduleCode,
+                                    title: timetableData.ModuleTitleList[moduleCode] || '',
+                                    type: lesson.lessonType,
+                                    venue: lesson.venue,
+                                    color: getColorForModule(moduleCode, timetableData.moduleOrder)
+                                });
+                            }
+                        });
+                    }
+                });
+
+                timetableData.customBlocks.forEach(block => {
+                    if (block.days.includes(todayName)) {
+                        const formatTime = (time: string) => {
+                            const [hour, minute] = time.split(':');
+                            const hourNum = parseInt(hour);
+                            const ampm = hourNum >= 12 ? 'PM' : 'AM';
+                            const displayHour = hourNum === 0 ? 12 : hourNum > 12 ? hourNum - 12 : hourNum;
+                            return `${displayHour}:${minute} ${ampm}`;
+                        };
+
+                        todaysClasses.push({
+                            time: `${formatTime(block.startTime)} - ${formatTime(block.endTime)}`,
+                            module: block.eventName,
+                            title: "",
+                            type: 'Custom',
+                            venue: 'Custom Event',
+                            color: block.color
+                        });
+                    }
+                });
+
+                setTodaySchedule(todaysClasses);
+            } catch (error) {
+                console.error('Failed to load today\'s schedule:', error);
+                setTodaySchedule([]);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadTodaySchedule();
+    }, []);
+
     const parseTime = (timeStr: string): number => {
         const [time, period] = timeStr.trim().split(' ');
         let [hours, minutes] = time.split(':').map(Number);
@@ -123,7 +212,12 @@ export default function TodaySchedule() {
             </div>
 
             <div className="today-schedule-list">
-                {scheduleWithGaps.length > 0 ? (
+                {loading ? (
+                    <div className="today-schedule-empty">
+                        <Calendar size={48} />
+                        <div className="loading-spinner"></div>
+                    </div>
+                ) : scheduleWithGaps.length > 0 ? (
                     scheduleWithGaps.map((item, index) => (
                         <div key={index} className="today-schedule-item">
                             <div className="today-schedule-time">
@@ -159,9 +253,6 @@ export default function TodaySchedule() {
                     <div className="today-schedule-empty">
                         <Calendar size={48} />
                         <p>No classes scheduled for today</p>
-                        <button className="today-schedule-create-btn">
-                            Create your timetable →
-                        </button>
                     </div>
                 )}
             </div>

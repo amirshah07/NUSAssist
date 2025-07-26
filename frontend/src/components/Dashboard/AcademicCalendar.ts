@@ -77,7 +77,7 @@ export const ACADEMIC_YEAR: AcademicYear = {
 };
 
 // NEXT ACADEMIC YEAR START DATE (Update when setting up new AY)
-const NEXT_AY_START = new Date('2026-08-03');
+export const NEXT_AY_START = new Date('2026-08-03');
 
 // Types for semester calculations
 interface CurrentSemesterInfo {

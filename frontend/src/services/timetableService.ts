@@ -1,98 +1,55 @@
 import { supabase } from '../lib/supabaseClient';
-
-interface SelectedModule {
-  [moduleCode: string]: any;
-}
-
-interface TimePreferenceData {
-  [day: string]: {
-    [time: string]: boolean;
-  };
-}
+import type { SelectedModule, TimePreferenceData, CustomTimeBlock } from '../components/Timetable/types';
 
 interface TimetableData {
   modules: SelectedModule;
   timePreferences: TimePreferenceData;
+  customBlocks: CustomTimeBlock[];
   semester: "sem1" | "sem2";
   isOptimized: boolean;
-}
-
-interface SavedTimetable {
-  id: string;
-  user_id: string;
-  semester: string;
-  modules: any;
-  time_preferences: any;
-  is_optimized: boolean;
-  created_at: string;
-  updated_at: string;
+  TotalMcs: number;
+  ModuleTitleList: { [moduleCode: string]: string };
+  moduleOrder: { [moduleCode: string]: number };
 }
 
 export class TimetableService {
-  private static async retryOperation<T>(
-    operation: () => Promise<T>,
-    maxRetries: number = 2
-  ): Promise<T> {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        if (attempt === maxRetries) {
-          throw error;
-        }
-        await new Promise(resolve => setTimeout(resolve, 500 * attempt));
-      }
-    }
-    throw new Error('Operation failed');
+  private static async getCurrentUser() {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw new Error('User not authenticated');
+    return user;
   }
 
   static async loadUserTimetable(userId: string, semester: "sem1" | "sem2"): Promise<TimetableData | null> {
     try {
-      return await this.retryOperation(async () => {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw new Error('Authentication error');
-        }
-        if (!session?.user) {
-          console.log('No authenticated user');
-          return null;
-        }
-        if (session.user.id !== userId) {
-          console.error('User ID mismatch');
-          throw new Error('User ID mismatch');
-        }
-        const { data, error } = await supabase
-          .from('user_timetables')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('semester', semester)
-          .single();
-        if (error) {
-          if (error.code === 'PGRST116') {
-            console.log('No saved timetable found');
-            return null;
-          }
-          console.error('Database error:', error);
-          throw error;
-        }
-        const timetable = data as SavedTimetable; 
-        return {
-          modules: timetable.modules || {},
-          timePreferences: timetable.time_preferences || {},
-          semester: semester,
-          isOptimized: timetable.is_optimized || false
-        };
-      });
+      const currentUser = await this.getCurrentUser();
+      if (currentUser.id !== userId) throw new Error('Unauthorized access');
+
+      const [timetableData, customBlocksData] = await Promise.all([
+        supabase.from('user_timetables').select('*').eq('user_id', userId).eq('semester', semester).single(),
+        supabase.from('user_custom_blocks').select('*').eq('user_id', userId).eq('semester', semester)
+      ]);
+
+      const customBlocks: CustomTimeBlock[] = (customBlocksData.data || []).map(block => ({
+        id: block.id,
+        eventName: block.event_name,
+        days: block.days,
+        startTime: block.start_time,
+        endTime: block.end_time,
+        color: block.color
+      }));
+
+      return {
+        modules: timetableData.data?.modules || {},
+        timePreferences: timetableData.data?.time_preferences || {},
+        customBlocks,
+        semester,
+        isOptimized: timetableData.data?.is_optimized || false,
+        TotalMcs: timetableData.data?.TotalMcs || 0,
+        ModuleTitleList: timetableData.data?.ModuleTitleList || {},
+        moduleOrder: timetableData.data?.module_order || {}
+      };
     } catch (error) {
-      console.error('Error loading user timetable:', error);
-      if (error instanceof Error && 
-          (error.message.includes('Authentication error') || 
-           error.message.includes('User ID mismatch') ||
-           error.message.includes('PGRST116'))) {
-        return null;
-      }
-      
+      console.error('Failed to load user timetable:', error);
       throw error;
     }
   }
@@ -102,246 +59,146 @@ export class TimetableService {
     semester: "sem1" | "sem2",
     modules: SelectedModule,
     timePreferences: TimePreferenceData,
-    isOptimized: boolean
+    isOptimized: boolean,
+    moduleOrder: { [moduleCode: string]: number }
   ): Promise<boolean> {
     try {
-      return await this.retryOperation(async () => {
-        // Check authentication
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw new Error('Authentication error');
-        }
-        
-        if (!session?.user) {
-          console.log('No authenticated user for save operation');
-          return false;
-        }
+      const currentUser = await this.getCurrentUser();
+      if (currentUser.id !== userId) throw new Error('Unauthorized access');
 
-        // Verify user ID matches session
-        if (session.user.id !== userId) {
-          console.error('User ID mismatch during save');
-          return false;
-        }
+      const moduleCodes = Object.keys(modules);
+      let TotalMcs = 0;
+      const ModuleTitleList: { [moduleCode: string]: string } = {};
 
-        if (!this.validateTimetableData({ modules, timePreferences, semester, isOptimized })) {
-          console.error('Invalid timetable data');
-          return false;
-        }
+      if (moduleCodes.length > 0) {
+        const { data } = await supabase
+          .from(semester)
+          .select('moduleCode, moduleCredit, moduleTitle')
+          .in('moduleCode', moduleCodes);
 
-        // Check if record exists
-        const { data: existingData, error: checkError } = await supabase
-          .from('user_timetables')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('semester', semester)
-          .single();
+        data?.forEach(module => {
+          TotalMcs += module.moduleCredit || 0;
+          ModuleTitleList[module.moduleCode] = module.moduleTitle || '';
+        });
+      }
 
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking existing data:', checkError);
-          throw checkError;
-        }
+      const timetableData = {
+        modules,
+        time_preferences: timePreferences,
+        is_optimized: isOptimized,
+        TotalMcs,
+        ModuleTitleList,
+        module_order: moduleOrder,
+        updated_at: new Date().toISOString()
+      };
 
-        if (existingData) {
-          // Update existing record
-          const { error: updateError } = await supabase
-            .from('user_timetables')
-            .update({
-              modules: modules,
-              time_preferences: timePreferences,
-              is_optimized: isOptimized,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', userId)
-            .eq('semester', semester);
+      const { data: existingData } = await supabase
+        .from('user_timetables')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('semester', semester)
+        .single();
 
-          if (updateError) {
-            console.error('Update error:', updateError);
-            throw updateError;
-          }
-          console.log('Timetable updated successfully');
-        } else {
-          // Insert new record
-          const { error: insertError } = await supabase
-            .from('user_timetables')
-            .insert({
-              user_id: userId,
-              semester: semester,
-              modules: modules,
-              time_preferences: timePreferences,
-              is_optimized: isOptimized
-            });
+      const { error } = existingData
+        ? await supabase.from('user_timetables').update(timetableData).eq('user_id', userId).eq('semester', semester)
+        : await supabase.from('user_timetables').insert({ user_id: userId, semester, ...timetableData });
 
-          if (insertError) {
-            console.error('Insert error:', insertError);
-            throw insertError;
-          }
-          console.log('New timetable saved successfully');
-        }
-
-        return true;
-      });
+      if (error) throw error;
+      return true;
     } catch (error) {
-      console.error('Error saving user timetable:', error);
+      console.error('Failed to save user timetable:', error);
+      return false;
+    }
+  }
+
+  static async saveCustomBlock(
+    userId: string,
+    semester: "sem1" | "sem2",
+    customBlock: CustomTimeBlock
+  ): Promise<boolean> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      if (currentUser.id !== userId) throw new Error('Unauthorized access');
+
+      const { error } = await supabase.from('user_custom_blocks').insert({
+        user_id: userId,
+        semester,
+        event_name: customBlock.eventName,
+        days: customBlock.days,
+        start_time: customBlock.startTime,
+        end_time: customBlock.endTime,
+        color: customBlock.color
+      });
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Failed to save custom block:', error);
+      return false;
+    }
+  }
+
+  static async deleteCustomBlock(userId: string, blockId: string): Promise<boolean> {
+    try {
+      const currentUser = await this.getCurrentUser();
+      if (currentUser.id !== userId) throw new Error('Unauthorized access');
+
+      const { error } = await supabase
+        .from('user_custom_blocks')
+        .delete()
+        .eq('id', blockId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Failed to delete custom block:', error);
       return false;
     }
   }
 
   static async getUserCurrentSemester(userId: string): Promise<"sem1" | "sem2"> {
     try {
-      return await this.retryOperation(async () => {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) {
-          return 'sem1'; // Default for unauthenticated users
-        }
+      const currentUser = await this.getCurrentUser();
+      if (currentUser.id !== userId) throw new Error('Unauthorized access');
 
-        // Verify user ID matches session
-        if (session.user.id !== userId) {
-          return 'sem1';
-        }
+      const { data } = await supabase
+        .from('user_current_semester')
+        .select('current_semester')
+        .eq('user_id', userId)
+        .single();
 
-        const { data, error } = await supabase
-          .from('user_current_semester')
-          .select('current_semester')
-          .eq('user_id', userId)
-          .single();
-
-        if (error) {
-          if (error.code === 'PGRST116') {
-            return 'sem1'; // Default if no preference saved
-          }
-          throw error;
-        }
-
-        return data.current_semester as "sem1" | "sem2";
-      });
+      return data?.current_semester || 'sem1';
     } catch (error) {
-      console.error('Error getting user current semester:', error);
-      return 'sem1'; // Safe default
+      console.error('Failed to get user current semester:', error);
+      return 'sem1';
     }
   }
 
-  static async updateUserCurrentSemester(
-    userId: string, 
-    semester: "sem1" | "sem2"
-  ): Promise<boolean> {
+  static async updateUserCurrentSemester(userId: string, semester: "sem1" | "sem2"): Promise<boolean> {
     try {
-      return await this.retryOperation(async () => {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) {
-          console.log('No authenticated user for semester update');
-          return false;
-        }
+      const currentUser = await this.getCurrentUser();
+      if (currentUser.id !== userId) throw new Error('Unauthorized access');
 
-        // Verify user ID matches session
-        if (session.user.id !== userId) {
-          console.error('User ID mismatch during semester update');
-          return false;
-        }
+      const { data: existingData } = await supabase
+        .from('user_current_semester')
+        .select('user_id')
+        .eq('user_id', userId)
+        .single();
 
-        // Check if record exists
-        const { data: existingData, error: checkError } = await supabase
-          .from('user_current_semester')
-          .select('user_id')
-          .eq('user_id', userId)
-          .single();
+      const semesterData = {
+        current_semester: semester,
+        updated_at: new Date().toISOString()
+      };
 
-        if (checkError && checkError.code !== 'PGRST116') {
-          throw checkError;
-        }
+      const { error } = existingData
+        ? await supabase.from('user_current_semester').update(semesterData).eq('user_id', userId)
+        : await supabase.from('user_current_semester').insert({ user_id: userId, ...semesterData });
 
-        if (existingData) {
-          // Update existing record
-          const { error: updateError } = await supabase
-            .from('user_current_semester')
-            .update({
-              current_semester: semester,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', userId);
-
-          if (updateError) throw updateError;
-        } else {
-          // Insert new record
-          const { error: insertError } = await supabase
-            .from('user_current_semester')
-            .insert({
-              user_id: userId,
-              current_semester: semester
-            });
-
-          if (insertError) throw insertError;
-        }
-
-        console.log(`Updated current semester to ${semester}`);
-        return true;
-      });
+      if (error) throw error;
+      return true;
     } catch (error) {
-      console.error('Error updating user current semester:', error);
-      return false;
-    }
-  }
-
-  static validateTimetableData(data: any): boolean {
-    if (!data) return false;
-    
-    if (typeof data.modules !== 'object') return false;
-    if (typeof data.timePreferences !== 'object') return false;
-    if (!['sem1', 'sem2'].includes(data.semester)) return false;
-    if (typeof data.isOptimized !== 'boolean') return false;
-    
-    for (const [moduleCode, moduleData] of Object.entries(data.modules)) {
-      if (typeof moduleCode !== 'string' || !moduleCode.trim()) {
-        return false;
-      }
-      
-      if (!moduleData || typeof moduleData !== 'object') {
-        return false;
-      }
-      
-      if (
-        typeof moduleData === 'object' &&
-        moduleData !== null &&
-        'timetable' in moduleData &&
-        moduleData.timetable &&
-        !Array.isArray((moduleData as any).timetable)
-      ) {
-        return false;
-      }
-    }
-    
-    for (const [day, timeSlots] of Object.entries(data.timePreferences)) {
-      if (!['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(day)) {
-        return false;
-      }
-      
-      if (timeSlots && typeof timeSlots !== 'object') {
-        return false;
-      }
-      
-      if (timeSlots) {
-        for (const [, isSelected] of Object.entries(timeSlots)) {
-          if (typeof isSelected !== 'boolean') {
-            return false;
-          }
-        }
-      }
-    }
-    
-    return true;
-  }
-
-  // Helper method to check authentication status
-  static async checkAuthStatus(): Promise<boolean> {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Auth check error:', error);
-        return false;
-      }
-      return !!session?.user;
-    } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('Failed to update user current semester:', error);
       return false;
     }
   }

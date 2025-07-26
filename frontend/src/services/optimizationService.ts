@@ -1,11 +1,7 @@
-interface TimePreferenceData {
-  [day: string]: {
-    [time: string]: boolean;
-  };
-}
+import { supabase } from '../lib/supabaseClient';
 
-interface TimetableConstraints {
-  preferredTimeSlots: TimePreferenceData;
+interface TimePreferenceData {
+  [day: string]: { [time: string]: boolean };
 }
 
 interface SelectedModule {
@@ -23,285 +19,143 @@ export class OptimizationService {
   private static apiEndpoint = import.meta.env.VITE_API_URL 
     ? `${import.meta.env.VITE_API_URL}/api/optimize-timetable`
     : import.meta.env.PROD 
-      ? 'https://nusassist-backend-144873295069.us-central1.run.app/api/optimize-timetable'
+      ? 'https://nusassist-backend-144873295069.asia-southeast1.run.app/api/optimize-timetable'
       : 'http://localhost:8080/api/optimize-timetable';
 
   static async optimizeTimetable(
-    modules: SelectedModule,
-    constraints: TimetableConstraints
+    currentModules: SelectedModule,
+    constraints: { preferredTimeSlots: TimePreferenceData },
+    semester: "sem1" | "sem2" = "sem1"
   ): Promise<OptimizedTimetable> {
-    try {
-      const payload = {
-        modules: JSON.parse(JSON.stringify(modules)),
-        constraints: JSON.parse(JSON.stringify(constraints))
-      };
+    const moduleCodes = Object.keys(currentModules);
+    if (!moduleCodes.length) throw new Error('No modules to optimize');
 
-      console.log('Sending optimization request to:', this.apiEndpoint);
-      console.log('Payload:', payload);
+    try {
+      const { data } = await supabase
+        .from(semester)
+        .select('moduleCode, semesterData')
+        .in('moduleCode', moduleCodes);
+
+      const freshModules: SelectedModule = {};
+      data?.forEach(module => {
+        if (module.semesterData) {
+          freshModules[module.moduleCode] = module.semesterData;
+        }
+      });
+
+      moduleCodes.forEach(code => {
+        if (!freshModules[code] && currentModules[code]) {
+          freshModules[code] = currentModules[code];
+        }
+      });
 
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modules: freshModules, constraints }),
       });
 
-      if (!response.ok) {
-        let errorText = '';
-        try {
-          errorText = await response.text();
-          console.error('Backend response not OK:', response.status, errorText);
-        } catch (e) {
-          console.error('Failed to read error response:', e);
-        }
-        throw new Error(`Optimization failed: ${response.status} ${response.statusText}`);
-      }
-
-      const optimizedTimetable = await response.json();
-      console.log('Backend optimization successful:', optimizedTimetable);
-
-      return optimizedTimetable;
+      if (!response.ok) throw new Error(`Backend optimization failed: ${response.status}`);
+      return await response.json();
     } catch (error) {
-      console.error('Error calling optimization service:', error);
-      
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        console.warn('Backend server not reachable. Make sure server is running');
-      } else if (error instanceof Error && error.message.includes('500')) {
-        console.error('Backend server error. Check server logs for details.');
-      }
-      
-      console.log('Using fallback optimization...');
-      return this.mockOptimize(modules, constraints);
+      console.warn('Backend optimization failed, using fallback:', error);
+      return this.fallbackOptimize(currentModules, constraints.preferredTimeSlots);
     }
   }
-  private static async mockOptimize(
+
+  private static fallbackOptimize(
     modules: SelectedModule,
-    constraints: TimetableConstraints
+    preferredTimeSlots: TimePreferenceData
   ): Promise<OptimizedTimetable> {
     return new Promise((resolve) => {
       setTimeout(() => {
         const optimized: OptimizedTimetable = {};
 
-        const getLessonPreferenceScore = (lesson: any): number => {
-          const lessonDay = lesson.day;
-          const lessonStartTime = lesson.startTime;
-          const lessonEndTime = lesson.endTime;
-          
+        const getLessonScore = (lesson: any): number => {
+          const { day, startTime, endTime } = lesson;
+          const totalMinutes = this.toMinutes(endTime) - this.toMinutes(startTime);
           let overlapMinutes = 0;
-          let totalLessonMinutes = this.parseTimeToMinutes(lessonEndTime) - this.parseTimeToMinutes(lessonStartTime);
           
-          const startMinutes = this.parseTimeToMinutes(lessonStartTime);
-          const endMinutes = this.parseTimeToMinutes(lessonEndTime);
-          
-          for (let currentMinutes = startMinutes; currentMinutes < endMinutes; currentMinutes += 60) {
-            const timeSlot = this.minutesToTimeSlot(currentMinutes);
-            if (constraints.preferredTimeSlots[lessonDay]?.[timeSlot]) {
-              overlapMinutes += Math.min(60, endMinutes - currentMinutes);
+          for (let mins = this.toMinutes(startTime); mins < this.toMinutes(endTime); mins += 60) {
+            const slot = `${Math.floor(mins / 60).toString().padStart(2, '0')}00`;
+            if (preferredTimeSlots[day]?.[slot]) {
+              overlapMinutes += Math.min(60, this.toMinutes(endTime) - mins);
             }
           }
           
-          const preferencePercentage = totalLessonMinutes > 0 ? (overlapMinutes / totalLessonMinutes) * 100 : 0;
-          
-          let bonusScore = 0;
           const commonTimes = ['0800', '0900', '1000', '1100', '1400', '1500', '1600'];
-          if (commonTimes.includes(lessonStartTime)) {
-            bonusScore += 10;
-          }
-          
-          return preferencePercentage + bonusScore;
+          const bonus = commonTimes.includes(startTime) ? 10 : 0;
+          return (overlapMinutes / totalMinutes) * 100 + bonus;
         };
 
-        const lessonsOverlap = (lesson1: any, lesson2: any): boolean => {
-          if (lesson1.day !== lesson2.day) return false;
-
-          const start1 = this.parseTimeToMinutes(lesson1.startTime);
-          const end1 = this.parseTimeToMinutes(lesson1.endTime);
-          const start2 = this.parseTimeToMinutes(lesson2.startTime);
-          const end2 = this.parseTimeToMinutes(lesson2.endTime);
-
-          return (start1 < end2 && start2 < end1);
+        const hasOverlap = (lessons1: any[], lessons2: any[]): boolean => {
+          return lessons1.some(l1 => 
+            lessons2.some(l2 => 
+              l1.day === l2.day && 
+              this.toMinutes(l1.startTime) < this.toMinutes(l2.endTime) && 
+              this.toMinutes(l2.startTime) < this.toMinutes(l1.endTime)
+            )
+          );
         };
 
-        const allLessonOptions: Array<{
-          moduleCode: string;
-          lessonType: string;
-          lesson: any;
-          preferenceScore: number;
-        }> = [];
-
+        const allClassGroups: any[] = [];
         Object.entries(modules).forEach(([moduleCode, moduleData]) => {
           if (!moduleData?.timetable) return;
 
-          const lessonTypeGroups: { [key: string]: any[] } = {};
-          
+          const classGroups: { [key: string]: any[] } = {};
           moduleData.timetable.forEach((lesson: any) => {
-            if (!lessonTypeGroups[lesson.lessonType]) {
-              lessonTypeGroups[lesson.lessonType] = [];
-            }
-            lessonTypeGroups[lesson.lessonType].push(lesson);
+            const key = `${lesson.lessonType}_${lesson.classNo}`;
+            (classGroups[key] = classGroups[key] || []).push(lesson);
           });
 
-          Object.entries(lessonTypeGroups).forEach(([lessonType, lessons]) => {
-            lessons.forEach(lesson => {
-              allLessonOptions.push({
-                moduleCode,
-                lessonType,
-                lesson: JSON.parse(JSON.stringify(lesson)),
-                preferenceScore: getLessonPreferenceScore(lesson)
-              });
+          Object.entries(classGroups).forEach(([classKey, lessons]) => {
+            const [lessonType, classNo] = classKey.split('_');
+            allClassGroups.push({
+              moduleCode,
+              lessonType,
+              classNo,
+              lessons,
+              score: lessons.reduce((sum, l) => sum + getLessonScore(l), 0) / lessons.length
             });
           });
         });
 
-        const moduleTypeCombinations: { [key: string]: Array<{
-          moduleCode: string;
-          lessonType: string;
-          lesson: any;
-          preferenceScore: number;
-        }> } = {};
+        allClassGroups.sort((a, b) => b.score - a.score);
 
-        allLessonOptions.forEach(option => {
-          const combinationKey = `${option.moduleCode}_${option.lessonType}`;
-          if (!moduleTypeCombinations[combinationKey]) {
-            moduleTypeCombinations[combinationKey] = [];
-          }
-          moduleTypeCombinations[combinationKey].push(option);
+        const selected: typeof allClassGroups = [];
+        const moduleTypeCombos: { [key: string]: typeof allClassGroups } = {};
+        
+        allClassGroups.forEach(group => {
+          const key = `${group.moduleCode}_${group.lessonType}`;
+          (moduleTypeCombos[key] = moduleTypeCombos[key] || []).push(group);
         });
 
-        Object.values(moduleTypeCombinations).forEach(group => {
-          group.sort((a, b) => b.preferenceScore - a.preferenceScore);
+        Object.values(moduleTypeCombos).forEach(groups => {
+          const bestGroup = groups.find(g => !selected.some(s => hasOverlap(s.lessons, g.lessons))) || groups[0];
+          if (bestGroup) selected.push(bestGroup);
         });
-
-        const selectedLessons: Array<{
-          moduleCode: string;
-          lessonType: string;
-          lesson: any;
-          preferenceScore: number;
-        }> = [];
-
-        const unassignedCombinations: string[] = [];
-
-        const sortedCombinations = Object.entries(moduleTypeCombinations)
-          .sort(([, optionsA], [, optionsB]) => optionsB[0].preferenceScore - optionsA[0].preferenceScore);
-
-        sortedCombinations.forEach(([combinationKey, options]) => {
-          let lessonSelected = false;
-          
-          for (const option of options) {
-            const hasOverlap = selectedLessons.some(selected => 
-              lessonsOverlap(selected.lesson, option.lesson)
-            );
-
-            if (!hasOverlap) {
-              selectedLessons.push(option);
-              lessonSelected = true;
-              break;
-            }
-          }
-          
-          if (!lessonSelected) {
-            unassignedCombinations.push(combinationKey);
-          }
-        });
-
-        if (unassignedCombinations.length > 0) {
-          console.warn(`Could not assign ${unassignedCombinations.length} combinations without overlaps`);
-          console.warn('Attempting minimal overlap assignment...');
-
-          unassignedCombinations.forEach(combinationKey => {
-            const options = moduleTypeCombinations[combinationKey];
-            if (options.length > 0) {
-              let bestOption = options[0];
-              let minOverlapCount = Number.MAX_SAFE_INTEGER;
-
-              for (const option of options) {
-                const overlapCount = selectedLessons.filter(selected => 
-                  lessonsOverlap(selected.lesson, option.lesson)
-                ).length;
-
-                if (overlapCount < minOverlapCount || 
-                    (overlapCount === minOverlapCount && option.preferenceScore > bestOption.preferenceScore)) {
-                  bestOption = option;
-                  minOverlapCount = overlapCount;
-                }
-              }
-
-              console.warn(`Forced selection with ${minOverlapCount} overlaps for ${combinationKey}`);
-              selectedLessons.push(bestOption);
-            }
-          });
-        }
 
         Object.keys(modules).forEach(moduleCode => {
-          const moduleLessons = selectedLessons
-            .filter(item => item.moduleCode === moduleCode)
-            .map(item => item.lesson);
-
+          const moduleClasses = selected.filter(g => g.moduleCode === moduleCode);
           optimized[moduleCode] = {
             moduleCode,
-            timetable: moduleLessons
+            timetable: moduleClasses.flatMap(g => g.lessons)
           };
         });
-
-        
-        
-        
 
         resolve(optimized);
       }, 1500);
     });
   }
 
-  
-
-  private static parseTimeToMinutes(timeString: string): number {
-    const hour = parseInt(timeString.substring(0, 2));
-    const minute = parseInt(timeString.substring(2, 4));
+  private static toMinutes(time: string): number {
+    const hour = parseInt(time.substring(0, 2));
+    const minute = parseInt(time.substring(2, 4));
     return hour * 60 + minute;
   }
 
-  private static minutesToTimeSlot(minutes: number): string {
-    const hour = Math.floor(minutes / 60);
-    const minute = minutes % 60;
-    return `${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}`;
-  }
-
-  static validateConstraints(constraints: TimetableConstraints): boolean {
-    if (!constraints) return false;
-    
-    if (!constraints.preferredTimeSlots || typeof constraints.preferredTimeSlots !== 'object') {
-      return false;
-    }
-
-    const hasAnySelection = Object.values(constraints.preferredTimeSlots).some(daySlots =>
-      Object.values(daySlots).some(isSelected => isSelected === true)
-    );
-
-    return hasAnySelection;
-  }
-
   static canOptimize(modules: SelectedModule): boolean {
-    if (!modules || Object.keys(modules).length === 0) {
-      return false;
-    }
-
-    return Object.values(modules).every(moduleData => 
-      moduleData?.timetable && Array.isArray(moduleData.timetable) && moduleData.timetable.length > 0
-    );
-  }
-
-  static hasUsefulConstraints(constraints: TimetableConstraints): boolean {
-    if (!this.validateConstraints(constraints)) return false;
-    
-    let selectedSlotCount = 0;
-    Object.values(constraints.preferredTimeSlots).forEach(daySlots => {
-      Object.values(daySlots).forEach(isSelected => {
-        if (isSelected) selectedSlotCount++;
-      });
-    });
-    
-    const totalSlots = 5 * 13;
-    return selectedSlotCount >= Math.max(5, totalSlots * 0.1);
+    return Object.keys(modules).length > 0 && 
+           Object.values(modules).every(m => m?.timetable?.length > 0);
   }
 }
