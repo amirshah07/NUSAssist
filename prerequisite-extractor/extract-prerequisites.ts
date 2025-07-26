@@ -21,7 +21,7 @@ const CONFIG = {
 };
 
 // Modules to ignore in prerequisites
-const MODULES_TO_IGNORE = ['MA1301', 'MA1301X', 'MA1301FC', 'ES1000', 'CM1417', 'CM1417X']; 
+const MODULES_TO_IGNORE = ['MA1301', 'MA1301X', 'MA1301FC','LSM1301', 'ES1000', 'CM1417', 'CM1417X']; 
 
 enum TokenType {
   MODULE_CODE = 'MODULE_CODE',
