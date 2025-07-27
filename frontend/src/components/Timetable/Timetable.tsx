@@ -25,26 +25,32 @@ export default function Timetable() {
   const [showTimePreferenceModal, setShowTimePreferenceModal] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false); // Add this state
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function getUser() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      setAuthChecked(true); // Mark auth as checked
     }
     
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setAuthChecked(true); // Mark auth as checked on state change too
     });
     
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
+    // Only proceed if auth has been checked
+    if (!authChecked) return;
+    
     if (!user?.id) {
-      setIsLoading(false);
+      setIsLoading(false); // Only set loading false after auth is confirmed
       return;
     }
 
@@ -72,7 +78,7 @@ export default function Timetable() {
     }
 
     loadUserData();
-  }, [user?.id]);
+  }, [user?.id, authChecked]); // Add authChecked as dependency
 
   useEffect(() => {
     if (!user?.id) return;
@@ -237,7 +243,7 @@ export default function Timetable() {
 
   const canOptimize = Object.keys(modules).length > 0 && OptimizationService.canOptimize(modules);
 
-  if (isLoading) return <Loading />;
+  if (isLoading || !authChecked) return <Loading />;
 
   return (
     <div className="timetable-container">
