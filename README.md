@@ -23,7 +23,7 @@ NUSAssist is a web application that helps students organize their academic life 
 * Create and customize your semester timetable
 * Add custom time blocks for personal activities
 * Timetable Optimizer: Automatically optimize your schedule to better suit your preferences
-* Export your timetable to Google Calendar / Apple Calendar
+* Export your timetable as an iCalendar file to a Calendar app of your choice
 
 ### Academic Tracking
 * Monitor your overall GPA and semester-by-semester performance
