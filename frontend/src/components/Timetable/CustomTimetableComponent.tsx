@@ -45,6 +45,19 @@ function getColorForModule(moduleCode: string, moduleOrder?: { [moduleCode: stri
   return MODULE_COLORS[Math.abs(hash) % MODULE_COLORS.length];
 }
 
+function adjustColorBrightness(color: string, factor: number): string {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+ 
+  const newR = Math.min(255, Math.max(0, Math.round(r * factor)));
+  const newG = Math.min(255, Math.max(0, Math.round(g * factor)));
+  const newB = Math.min(255, Math.max(0, Math.round(b * factor)));
+  
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
 const CustomTimetableComponent = ({ 
   selectedModules, 
   customBlocks,
@@ -295,7 +308,7 @@ const CustomTimetableComponent = ({
       overlappingGroups.push(group);
     });
 
-    const result: Array<{ block: TimetableBlock; position: any } | { type: 'more'; count: number; position: any; blocks: TimetableBlock[] }> = [];
+    const result: Array<{ block: TimetableBlock; position: any } | { type: 'more'; count: number; position: any; blocks: TimetableBlock[]; color: string }> = [];
 
     overlappingGroups.forEach(group => {
       group.sort((a, b) => TimeUtils.toMinutes(a.startTime) - TimeUtils.toMinutes(b.startTime));
@@ -340,10 +353,16 @@ const CustomTimetableComponent = ({
         const offsetMinutes = blockStart - slotStart;
         const offsetPx = (offsetMinutes / 60) * 60;
 
+        const firstHiddenBlock = hiddenBlocks[0];
+        const moreIndicatorColor = firstHiddenBlock.type === 'module' 
+          ? adjustColorBrightness(getColorForModule(firstHiddenBlock.moduleCode, moduleOrder), 0.7)
+          : '#7c3aed';
+
         result.push({
           type: 'more',
           count: hiddenBlocks.length,
           blocks: hiddenBlocks,
+          color: moreIndicatorColor,
           position: {
             top: `${offsetPx}px`,
             left: '75%',
@@ -373,6 +392,29 @@ const CustomTimetableComponent = ({
     );
   }
 
+  function getBlockColor(block: TimetableBlock, showingAlternatives: AlternativeLessonState | null): string {
+    if (block.type !== 'module') return block.color;
+    
+    const baseColor = getColorForModule(block.moduleCode, moduleOrder);
+    
+    if (!showingAlternatives || 
+        showingAlternatives.moduleCode !== block.moduleCode || 
+        showingAlternatives.lessonType !== block.lessonType) {
+      return baseColor;
+    }
+    
+    const isCurrentSelection = showingAlternatives.classNo === block.classNo;
+    const isAlternative = isAlternativeBlock(block);
+    
+    if (isCurrentSelection) {
+      return adjustColorBrightness(baseColor, 1.2); 
+    } else if (isAlternative) {
+      return adjustColorBrightness(baseColor, 0.7); 
+    }
+    
+    return baseColor;
+  }
+
   const timetableBlocks = useMemo(() => {
     const moduleBlocks = processModuleTimetable(selectedModules);
     
@@ -389,7 +431,7 @@ const CustomTimetableComponent = ({
             );
             
             if (!isCurrentSelection) {
-              moduleBlocks.push({ ...lesson, color: '#7c3aed' });
+              moduleBlocks.push({ ...lesson });
             }
           }
         });
@@ -429,7 +471,7 @@ const CustomTimetableComponent = ({
                             key={`more-${day}-${timeSlot}-${index}`}
                             className="timetable-block more-indicator"
                             style={{
-                              backgroundColor: '#7c3aed',
+                              backgroundColor: item.color,
                               ...item.position,
                               position: 'absolute',
                               cursor: 'pointer'
@@ -462,7 +504,7 @@ const CustomTimetableComponent = ({
                           key={blockKey}
                           className={`timetable-block ${isAlternative ? 'alternative' : ''} ${isCurrentSelection ? 'current-selection' : ''} ${block.type === 'custom' ? 'custom-block' : ''}`}
                           style={{
-                            backgroundColor: block.color,
+                            backgroundColor: getBlockColor(block, showingAlternatives),
                             ...position,
                             position: 'absolute'
                           }}
@@ -493,12 +535,6 @@ const CustomTimetableComponent = ({
           ))}
         </div>
       </div>
-
-      {Object.keys(selectedModules).length === 0 && customBlocks.length === 0 && (
-        <div className="no-content-message">
-          <p>No modules or events to display. Add modules or custom time blocks to see your timetable.</p>
-        </div>
-      )}
     </div>
 
     <ConfirmModal

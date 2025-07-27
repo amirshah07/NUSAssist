@@ -118,13 +118,11 @@
 }
 
 .timetable-block.alternative {
-  background: #7c3aed !important;
   border-left-color: rgba(255, 255, 255, 0.5);
   animation: pulse-alternative 2s infinite;
 }
 
 .timetable-block.current-selection {
-  opacity: 0.6;
   transform: none;
 }
 
@@ -146,10 +144,10 @@
 
 @keyframes pulse-alternative {
   0%, 100% {
-    box-shadow: 0 0 8px rgba(124, 58, 237, 0.6);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
   }
   50% {
-    box-shadow: 0 0 16px rgba(124, 58, 237, 0.8);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
   }
 }
 
