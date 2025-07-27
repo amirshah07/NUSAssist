@@ -49,10 +49,18 @@ export class OptimizationService {
         }
       });
 
+      const validModules: SelectedModule = {};
+      Object.entries(freshModules).forEach(([moduleCode, moduleData]) => {
+        if (moduleData && Array.isArray(moduleData.timetable) && moduleData.timetable.length > 0) {
+          validModules[moduleCode] = moduleData;
+        }
+      });
+
+      
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modules: freshModules, constraints }),
+        body: JSON.stringify({ modules: validModules, constraints }),
       });
 
       if (!response.ok) throw new Error(`Backend optimization failed: ${response.status}`);
@@ -69,6 +77,12 @@ export class OptimizationService {
   ): Promise<OptimizedTimetable> {
     return new Promise((resolve) => {
       setTimeout(() => {
+        const validModules: SelectedModule = {};
+        Object.entries(modules).forEach(([moduleCode, moduleData]) => {
+          if (moduleData && Array.isArray(moduleData.timetable) && moduleData.timetable.length > 0) {
+            validModules[moduleCode] = moduleData;
+          }
+        });
         const optimized: OptimizedTimetable = {};
 
         const getLessonScore = (lesson: any): number => {
@@ -155,7 +169,9 @@ export class OptimizationService {
   }
 
   static canOptimize(modules: SelectedModule): boolean {
-    return Object.keys(modules).length > 0 && 
-           Object.values(modules).every(m => m?.timetable?.length > 0);
+    const validModules = Object.values(modules).filter(m => 
+      m && Array.isArray(m.timetable) && m.timetable.length > 0
+    );
+    return validModules.length > 0;
   }
 }

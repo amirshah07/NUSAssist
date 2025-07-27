@@ -154,7 +154,15 @@ export default function Timetable() {
         currentSemester
       );
       
-      setModules(optimizedTimetable);
+      // Merge optimized results with non-optimizable modules
+      const mergedModules = { ...modules };
+      
+      // Update only the modules that were optimized
+      Object.keys(optimizedTimetable).forEach(moduleCode => {
+        mergedModules[moduleCode] = optimizedTimetable[moduleCode];
+      });
+      
+      setModules(mergedModules); // Use merged instead of just optimizedTimetable
       setTimePreferences(preferences);
       setIsOptimized(true);
       setShowTimePreferenceModal(false);
