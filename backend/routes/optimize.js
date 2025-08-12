@@ -35,7 +35,6 @@ router.post('/optimize-timetable', async (req, res) => {
       });
     }
 
-    // Validate that at least some time slots are selected
     const hasSelectedSlots = Object.values(preferredTimeSlots).some(daySlots =>
       Object.values(daySlots).some(isSelected => isSelected === true)
     );
@@ -104,7 +103,7 @@ router.post('/optimize-timetable', async (req, res) => {
     const timeout = setTimeout(() => {
       console.log('Optimization timeout, killing process');
       pythonProcess.kill('SIGTERM');
-    }, 90000); // Increased timeout to 90 seconds
+    }, 90000);
 
     pythonProcess.on('close', async (code) => {
       clearTimeout(timeout);
@@ -116,7 +115,6 @@ router.post('/optimize-timetable', async (req, res) => {
           console.error(`Python process failed with code: ${code}`);
           console.error('Error details:', errorData);
           
-          // Try to extract meaningful error message
           let errorMessage = 'Unknown optimization error';
           if (errorData.includes('location')) {
             errorMessage = 'Venue location data issue. Check venues.json file format.';
@@ -145,7 +143,6 @@ router.post('/optimize-timetable', async (req, res) => {
         }
 
         try {
-          // Try to find JSON in the output (in case there's other text)
           const lines = outputData.split('\n');
           let jsonLine = '';
           
@@ -158,7 +155,6 @@ router.post('/optimize-timetable', async (req, res) => {
           }
           
           if (!jsonLine) {
-            // Fallback: try to parse the entire output
             jsonLine = outputData.trim();
           }
           
