@@ -41,4 +41,4 @@ NUSAssist is a web application that helps students organize their academic life 
 * **Frontend:** React + TypeScript
 * **Backend:** Node.js + Express.js
 * **Database:** Supabase
-* **Algorithm:** Python + OR-Tools
+* **Timetable Algorithm:** Python + OR-Tools
