@@ -1,17 +1,17 @@
-# <img src="frontend/public/orange-graduation-cap.png" width="30" height="30" style="position: relative; top: 4px; margin-right: 4px;"> NUSAssist
+# NUSAssist
 Welcome to NUSAssist, a comprehensive academic planning and tracking tool designed for NUS students to manage their university journey effectively.
 
-🌐 **Live at: [nusassist.com](https://nusassist.com)**
+**Live at: [nusassist.com](https://nusassist.com)**
 
-## 🎯 Overview
+## Overview
 NUSAssist is a web application that helps students organize their academic life with intelligent planning tools and real-time progress tracking. Whether you're planning your modules, optimizing your timetable, or tracking your GPA, NUSAssist has got you covered.
 
 **Why NUSAssist?**
-* ⏱️ Save hours on manual timetable planning
-* ✅ Never miss prerequisites again  
-* 🎓 Graduate on time with confidence
+* Save hours on manual timetable planning
+* Never miss prerequisites again  
+* Graduate on time with confidence
 
-## ✨ Key Features
+## Key Features
 
 ### Dashboard
 * View your daily class schedule at a glance
@@ -37,7 +37,7 @@ NUSAssist is a web application that helps students organize their academic life 
 * Click on modules for detailed course information
 * Plan your academic journey from Year 1 to graduation
 
-## 💻 Tech Stack
+## Tech Stack
 * **Frontend:** React + TypeScript
 * **Backend:** Node.js + Express.js
 * **Database:** Supabase
