@@ -84,7 +84,7 @@ export default function TodaySchedule() {
                             if (lesson.day === todayName) {
                                 const formatTime = (time: string) => {
                                     const hour = parseInt(time.substring(0, 2));
-                                    const minute = time.substring(3, 5) || '00';
+                                    const minute = time.substring(2, 4) || '00';
                                     const ampm = hour >= 12 ? 'PM' : 'AM';
                                     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
                                     return `${displayHour}:${minute.padStart(2, '0')} ${ampm}`;

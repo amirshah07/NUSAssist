@@ -56,10 +56,19 @@ export class OptimizationService {
         }
       });
 
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session) {
+        throw new Error('Authentication required. Please log in.');
+      }
+
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ modules: validModules, constraints }),
       });
 
@@ -67,7 +76,33 @@ export class OptimizationService {
       return await response.json();
     } catch (error) {
       console.warn('Backend optimization failed, using fallback:', error);
-      return this.fallbackOptimize(currentModules, constraints.preferredTimeSlots);
+      
+      const { data } = await supabase
+        .from(semester)
+        .select('moduleCode, semesterData')
+        .in('moduleCode', moduleCodes);
+
+      const freshModules: SelectedModule = {};
+      data?.forEach(module => {
+        if (module.semesterData) {
+          freshModules[module.moduleCode] = module.semesterData;
+        }
+      });
+
+      moduleCodes.forEach(code => {
+        if (!freshModules[code] && currentModules[code]) {
+          freshModules[code] = currentModules[code];
+        }
+      });
+
+      const validModules: SelectedModule = {};
+      Object.entries(freshModules).forEach(([moduleCode, moduleData]) => {
+        if (moduleData && Array.isArray(moduleData.timetable) && moduleData.timetable.length > 0) {
+          validModules[moduleCode] = moduleData;
+        }
+      });
+
+      return this.fallbackOptimize(validModules, constraints.preferredTimeSlots);
     }
   }
 
@@ -92,7 +127,7 @@ export class OptimizationService {
           
           for (let mins = this.toMinutes(startTime); mins < this.toMinutes(endTime); mins += 60) {
             const slot = `${Math.floor(mins / 60).toString().padStart(2, '0')}00`;
-            if (preferredTimeSlots[day]?.[slot]) {
+            if (!preferredTimeSlots[day]?.[slot]) {
               overlapMinutes += Math.min(60, this.toMinutes(endTime) - mins);
             }
           }
@@ -134,7 +169,7 @@ export class OptimizationService {
           });
         });
 
-        allClassGroups.sort((a, b) => b.score - a.score);
+        allClassGroups.sort((a, b) => a.score - b.score);
 
         const selected: typeof allClassGroups = [];
         const moduleTypeCombos: { [key: string]: typeof allClassGroups } = {};

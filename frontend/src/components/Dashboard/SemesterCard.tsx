@@ -54,7 +54,7 @@ export default function SemesterCard() {
                     // Once new AY Calendar updated, during summer display semester 1
                     displaySemester = 'sem1';
                 }
-                console.log(`Displaying semester: ${displaySemester}`);
+                
 
                 // Load timetable data
                 const timetableData = await TimetableService.loadUserTimetable(user.id, displaySemester);
